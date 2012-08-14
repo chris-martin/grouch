@@ -1,8 +1,9 @@
 from BeautifulSoup import BeautifulSoup
 from datetime import timedelta
-from mechanize import Browser
 from operator import itemgetter
 import time
+from urllib2 import OpenerDirector, HTTPDefaultErrorHandler, \
+  HTTPSHandler
 
 from term import Term
 
@@ -15,16 +16,18 @@ class Scraper:
     self.context = context
     self.enable_http = enable_http
 
-  def browser_open(self, url, browser = None):
+  def browser_open(self, url, opener = None):
 
     if not self.enable_http:
       raise Exception('http is not enabled')
 
-    if browser is None:
-      browser = Browser()
+    if opener is None:
+      opener = OpenerDirector()
+      opener.add_handler(HTTPDefaultErrorHandler())
+      opener.add_handler(HTTPSHandler())
 
     t = time.clock()
-    response = browser.open(url)
+    response = opener.open(url)
     t = timedelta(seconds = time.clock() - t)
 
     self.context.logger.info('%s\n -> %s\n' % (t, url))
