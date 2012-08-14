@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML lang="en">
+<HEAD>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<TITLE>Select Term or Date Range</TITLE>
+<META HTTP-EQUIV="Content-Script-Type" NAME="Default_Script_Language" CONTENT="text/javascript">
+</HEAD>
+<BODY>
+<DIV class="headerwrapperdiv">
+<DIV class="pageheaderdiv1">
+</DIV><DIV class="headerlinksdiv">
+</DIV>
+</DIV>
+<DIV class="pagetitlediv">
+<a name="main_content"></a>
+</DIV>
+<DIV class="pagebodydiv">
+<FORM ACTION="/pls/bprod/bwckgens.p_proc_term_date" METHOD="POST" onSubmit="return checkSubmit()">
+<INPUT TYPE="hidden" NAME="p_calling_proc" VALUE="bwckschd.p_disp_dyn_sched">
+<TABLE CLASS="dataentrytable" summary="This layout table is used for term selection."width="100%"><CAPTION class="captiontext">Search by Term: </CAPTION>
+<TR>
+<TD CLASS="dedefault"><LABEL for=term_input_id><SPAN class="fieldlabeltextinvisible">Term</SPAN></LABEL>
+<SELECT NAME="p_term" SIZE="1" ID="term_input_id">
+<OPTION VALUE="">None
+<OPTION VALUE="201227">Language Institute Fall 1 12 (View only)
+<OPTION VALUE="201225">Language Institute Summer 2012 (View only)
+<OPTION VALUE="201224">Lang Institute Summer IEP 2012 (View only)
+<OPTION VALUE="201208">Fall 2012
+<OPTION VALUE="201205">Summer 2012
+<OPTION VALUE="201202">Spring 2012
+<OPTION VALUE="201108">Fall 2011
+<OPTION VALUE="201105">Summer 2011 (View only)
+<OPTION VALUE="201102">Spring 2011 (View only)
+<OPTION VALUE="201008">Fall 2010 (View only)
+<OPTION VALUE="201005">Summer 2010 (View only)
+<OPTION VALUE="201002">Spring 2010 (View only)
+</SELECT>
+</TD>
+</TR>
+</TABLE>
+<BR>
+<BR>
+<INPUT TYPE="submit" VALUE="Submit">
+<INPUT TYPE="reset" VALUE="Reset">
+</FORM>
+</DIV>
+</BODY>
+</HTML>
