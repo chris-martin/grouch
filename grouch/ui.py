@@ -38,7 +38,10 @@ def command_list():
   return x
 
 def store(args):
-  return Store(enable_http = args.enable_http)
+  return Store(
+    enable_http = args.enable_http,
+    force_refresh = args.refresh,
+  )
 
 @command()
 def terms(args):
@@ -82,7 +85,14 @@ def main():
     '--offline',
     dest = 'enable_http',
     action = 'store_false',
-    help = 'Disable network access and use only cached data'
+    help = 'Disable network access and use only cached data',
+  )
+
+  parser.add_argument(
+    '--refresh',
+    action = 'store_true',
+    help = 'Fetch the most recent information from the ' \
+      'server, regardless of the cache state'
   )
 
   args = parser.parse_args()

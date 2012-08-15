@@ -8,15 +8,15 @@ from util import makedirs
 
 class Store:
 
-  def __init__(self, context = None, enable_http = True):
+  def __init__(self, context = None, enable_http = True,
+      force_refresh = False):
 
     if context is None:
       context = Context()
 
     self.__context = context
-
     self.__enable_http = enable_http
-
+    self.__force_refresh = force_refresh
     self.__private_scrapers = {}
 
     self.__public_scraper = Scraper(
@@ -49,21 +49,31 @@ class Store:
   def __get_terms(self):
 
     journal = self.__journal.child('terms')
-    (terms, fresh) = journal.get_latest(Terms, timedelta(hours = 1))
 
-    if not fresh:
+    terms = None
+
+    if not self.__force_refresh:
+      (terms, fresh) = journal.get_latest(Terms, timedelta(hours = 1))
+
+    if self.__force_refresh or not fresh:
       source = self.__public_scraper.get_terms()
       if source is not None:
         terms = Terms(source)
         journal.put(terms)
 
-    if terms is not None:
-      return terms
+    return terms
 
   #
   # A list of Subjects, sorted by name.
   #
   def get_subjects(self, term = None):
+
+    subjects = self.__get_subjects()
+
+    if subjects is not None:
+      return subjects.list
+
+  def __get_subjects(self, term = None):
 
     terms = self.__get_terms()
 
@@ -76,16 +86,19 @@ class Store:
     term_id = terms.dict[term]
 
     journal = self.__journal.child('terms', term_id, 'subjects')
-    (subjects, fresh) = journal.get_latest(Subjects, timedelta(hours = 1))
 
-    if not fresh:
+    subjects = None
+
+    if not self.__force_refresh:
+      (subjects, fresh) = journal.get_latest(Subjects, timedelta(hours = 1))
+
+    if self.__force_refresh or not fresh:
       source = self.__public_scraper.get_subjects(term_id = term_id)
       if source is not None:
         subjects = Subjects(source)
         journal.put(subjects)
 
-    if subjects is not None:
-      return subjects.list
+    return subjects
 
 _timestamp_format = '%Y-%m-%d-%H-%M-%S-%f'
 
