@@ -3,7 +3,7 @@ import argparse
 from context import Context
 from scraper import Scraper
 
-def commandType(value):
+def command_type(value):
   if value not in commands:
     raise argparse.ArgumentTypeError('must be one of: %s' \
       % ', '.join(command_list()))
@@ -36,7 +36,7 @@ def main():
 
   parser.add_argument(
     'command',
-    type = commandType,
+    type = command_type,
     help = 'One of the following options: %s' \
       % ', '.join(command_list()),
   )
