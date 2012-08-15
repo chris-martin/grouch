@@ -9,6 +9,12 @@ def command_type(value):
       % ', '.join(command_list()))
   return commands[value]
 
+def term_type(value):
+  term = Term.parse(value)
+  if term is None:
+    raise argparse.ArgumentTypeError('invalid format')
+  return term
+
 commands = {}
 
 def command():
@@ -39,6 +45,12 @@ def main():
     type = command_type,
     help = 'One of the following options: %s' \
       % ', '.join(command_list()),
+  )
+
+  parser.add_argument(
+    '--term',
+    type = term_type,
+    help = 'A semester and year such as "summer 2007"'
   )
 
   args = parser.parse_args()
