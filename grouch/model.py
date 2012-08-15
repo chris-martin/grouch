@@ -43,3 +43,24 @@ class Term:
   def __cmp__(self, other):
     return (self.__year - other.__year) \
         or (self.__season - other.__season)
+
+class Subject:
+
+  def __init__(self, id, name):
+    self.__id = id
+    self.__name = name
+
+  def get_id(self):
+    return self.__id
+
+  def get_name(self):
+    return self.__name
+
+  def __unicode__(self):
+    return '%s %s' % (self.__id, self.__name)
+
+  def __str__(self):
+    return unicode(self).encode('utf-8')
+
+  def __repr__(self):
+    return '<Subject id="%s" name="%s">' % (self.__id, self.__name)

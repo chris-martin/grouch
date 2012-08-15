@@ -1,3 +1,3 @@
 from context import Context
 from scraper import Scraper
-from model import Term
+from model import Subject, Term
