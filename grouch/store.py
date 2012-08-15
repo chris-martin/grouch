@@ -8,19 +8,30 @@ from util import makedirs
 
 class Store:
 
-  def __init__(self, context = None):
+  def __init__(self, context = None, enable_http = True):
 
     if context is None:
       context = Context()
 
     self.__context = context
+
+    self.__enable_http = enable_http
+
     self.__private_scrapers = {}
-    self.__public_scraper = Scraper(context = context)
-    self.__journal = Journal(context = context)
+
+    self.__public_scraper = Scraper(
+      context = context,
+      enable_http = enable_http,
+    )
+
+    self.__journal = Journal(
+      context = context
+    )
 
   def add_private_scraper(username, password):
     self.__private_scrapers[username] = Scraper(
-      context = self.context,
+      context = self.__context,
+      enable_http = self.__enable_http,
       username = username,
       password = password,
     )
@@ -29,7 +40,11 @@ class Store:
   # A list of Terms, sorted by chronology in reverse.
   #
   def get_terms(self):
-    return self.__get_terms().list
+
+    terms = self.__get_terms()
+
+    if terms is not None:
+      return terms.list
 
   def __get_terms(self):
 
@@ -37,29 +52,40 @@ class Store:
     (terms, age) = journal.get_latest(Terms)
 
     if terms is None:
-      terms = Terms(self.__public_scraper.get_terms())
-      journal.put(terms)
+      source = self.__public_scraper.get_terms()
+      if source is not None:
+        terms = Terms(source)
+        journal.put(terms)
 
-    return terms
+    if terms is not None:
+      return terms
 
   #
   # A list of Subjects, sorted by name.
   #
   def get_subjects(self, term = None):
 
-    if term is None:
-      term = self.__get_terms().list[0]
+    terms = self.__get_terms()
 
-    term_id = self.__get_terms().dict[term]
+    if terms is None:
+      return None
+
+    if term is None:
+      term = terms.list[0]
+
+    term_id = terms.dict[term]
 
     journal = self.__journal.child('terms', term_id, 'subjects')
     (subjects, age) = journal.get_latest(Subjects)
 
     if subjects is None:
-      subjects = Subjects(self.__public_scraper.get_subjects(term_id = term_id))
-      journal.put(subjects)
+      source = self.__public_scraper.get_subjects(term_id = term_id)
+      if source is not None:
+        subjects = Subjects(source)
+        journal.put(subjects)
 
-    return subjects.list
+    if subjects is not None:
+      return subjects.list
 
 _timestamp_format = '%Y-%m-%d-%H-%M-%S-%f'
 
@@ -146,6 +172,8 @@ class Journal:
 
     filename = max(files)
     full_filename = os.path.join(self.dir(), filename)
+
+    self.__context.get_logger().info('Load\n%s' % full_filename)
 
     fp = open(full_filename, 'r')
     try:

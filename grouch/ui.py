@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from context import Context
 from model import Term
@@ -7,6 +8,9 @@ from store import Store
 
 def err(x):
   sys.stderr.write('%s\n' % x)
+
+def not_available():
+  err('Information not available.')
 
 def command_type(value):
   if value not in commands:
@@ -33,17 +37,26 @@ def command_list():
   x.sort()
   return x
 
+def store(args):
+  return Store(enable_http = args.enable_http)
+
 @command()
 def terms(args):
-  terms = Store().get_terms()
-  print('\n'.join(map(str, terms)))
+  terms = store(args).get_terms()
+  if terms is None:
+    not_available()
+  else:
+    print('\n'.join(map(str, terms)))
 
 @command()
 def subjects(args):
-  subjects = Store().get_subjects(term = args.term)
-  print('\n'.join(list([
-    '\t'.join((s.get_id(), s.get_name())) for s in subjects
-  ])))
+  subjects = store(args).get_subjects(term = args.term)
+  if subjects is None:
+    not_available()
+  else:
+    print('\n'.join(list([
+      '\t'.join((s.get_id(), s.get_name())) for s in subjects
+    ])))
 
 def main():
 
@@ -62,7 +75,14 @@ def main():
     '--term',
     type = term_type,
     help = 'A semester and year such as "summer 2007"' \
-      ' (defaults to the latest semester)'
+      ' (defaults to the latest term)',
+  )
+
+  parser.add_argument(
+    '--offline',
+    dest = 'enable_http',
+    action = 'store_false',
+    help = 'Disable network access and use only cached data'
   )
 
   args = parser.parse_args()

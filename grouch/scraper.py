@@ -44,6 +44,10 @@ class Scraper:
   def get_terms(self, html = None):
 
     if html is None:
+
+      if not self.__enable_http:
+        return None
+
       url = oscar_url('bwckschd.p_disp_dyn_sched')
       (response, html) = self.fetch(Request(url))
 
@@ -70,6 +74,9 @@ class Scraper:
 
       if term_id is None:
         raise Exception('either html or term_id is required')
+
+      if not self.__enable_http:
+        return None
 
       (response, html) = self.fetch(Request(
         url = oscar_url('bwckgens.p_proc_term_date'),
