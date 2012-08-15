@@ -14,12 +14,12 @@ def oscar_url(procedure):
 class Scraper:
 
   def __init__(self, context, enable_http = True):
-    self.context = context
-    self.enable_http = enable_http
+    self.__context = context
+    self.__enable_http = enable_http
 
   def fetch(self, request, opener = None):
 
-    if not self.enable_http:
+    if not self.__enable_http:
       raise Exception('http is not enabled')
 
     if opener is None:
@@ -31,7 +31,7 @@ class Scraper:
     response = opener.open(request)
     t = timedelta(seconds = time.clock() - t)
     url = request.get_full_url()
-    self.context.logger.info('%s\n -> %s\n' % (t, url))
+    self.__context.get_logger().info('%s\n -> %s\n' % (t, url))
     return response
 
   #

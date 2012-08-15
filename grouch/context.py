@@ -16,15 +16,15 @@ class Context:
     self.init_logger()
 
   def init_config_dir(self):
-    self.config_dir = '%s/grouch' % config_home()
-    makedirs(self.config_dir)
+    self.__config_dir = '%s/grouch' % config_home()
+    makedirs(self.__config_dir)
 
   def init_logger(self):
 
     logger = logging.getLogger(__name__)
 
     handler = logging.FileHandler(
-      '%s/log' % self.config_dir)
+      '%s/log' % self.__config_dir)
 
     formatter = logging.Formatter(
       '%(asctime)s %(levelname)s %(message)s')
@@ -33,4 +33,10 @@ class Context:
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-    self.logger = logger
+    self.__logger = logger
+
+  def get_config_dir(self):
+    return self.__config_dir
+
+  def get_logger(self):
+    return self.__logger
