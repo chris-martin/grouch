@@ -31,6 +31,9 @@ Grouch keeps cached data in "~/.config/grouch/cache/".
 Work in progress: Presently, this cache is never invalidated,
 so you'll have to clear it manually to scrape new information.
 
+If you run ui.py with the --offline flag, it will use the cache
+exclusively, and not attempt to use the network for anything.
+
 Logging
 -------
 
