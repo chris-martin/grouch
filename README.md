@@ -31,3 +31,8 @@ Grouch keeps cached data in "~/.config/grouch/cache/".
 Work in progress: Presently, this cache is never invalidated,
 so you'll have to clear it manually to scrape new information.
 
+Logging
+-------
+
+HTTP and filesystem activity is logged to "~/.config/grouch/log".
+
