@@ -20,14 +20,23 @@ class Store:
       password = password,
     )
 
+  #
+  # A list of Terms, sorted by chronology in reverse.
+  #
   def get_terms(self):
     data = self.data
+
     if not 'term list' in data:
       terms = self.public_scraper.get_terms()
-      data['term list'] = list([ t['term'] for t in terms ])
-      data['term dict'] = dict([ (t['term'], {'id': t['id']}) for t in terms ])
+      data['term list'] = list([ t[0] for t in terms ])
+      data['term list'].sort(reverse = True)
+      data['term dict'] = dict([ (t[0], { 'id': t[1] }) for t in terms ])
+
     return data['term list']
 
+  #
+  # A list of Subjects, sorted by name.
+  #
   def get_subjects(self, term = None):
     data = self.data
     self.get_terms()
@@ -36,6 +45,9 @@ class Store:
       term = data['term list'][0]
 
     t = data['term dict'][term]
+
     if 'subject list' not in t:
       t['subject list'] = self.public_scraper.get_subjects(term_id = t['id'])
+      t['subject list'].sort(key = lambda x: x.get_name())
+
     return t['subject list']

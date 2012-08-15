@@ -35,15 +35,10 @@ class Scraper:
     return response
 
   #
-  # Returns a list of terms, each given in the form
-  # { 'id': '201208', 'term': Term(Term.FALL, 2012) },
-  # sorted by chronology in reverse.
+  # A list of tuples in the form
+  # ( Term(Term.FALL, 2012), '201208' ).
   #
-  # The first item in this list is most likely the
-  # term you are interested in.
-  #
-  # This method performs one http request, without
-  # authentication.
+  # Performs one http request, without authentication.
   #
   def get_terms(self, html = None):
 
@@ -60,22 +55,14 @@ class Scraper:
         term = Term.parse(o.text)
         if term:
           attrs = dict(o.attrs)
-          yield {
-            'id': attrs['value'],
-            'term': term,
-          }
+          yield (term, attrs['value'])
 
-    options = list(iter_options())
-    options.sort(key = itemgetter('term'), reverse = True)
-    return options
+    return list(iter_options())
 
   #
-  # Returns a list of terms, each given in the form
-  # { 'id': 'CS', 'name': 'Computer Science' },
-  # sorted by name.
+  # A list of Subjects.
   #
-  # This method performs one http request, without
-  # authentication.
+  # Performs one http request, without authentication.
   #
   def get_subjects(self, html = None, term_id = None):
 
@@ -104,6 +91,4 @@ class Scraper:
           name = o.text,
         )
 
-    options = list(iter_options())
-    options.sort(key = lambda x: x.get_name())
-    return options
+    return list(iter_options())
