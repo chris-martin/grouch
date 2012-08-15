@@ -49,9 +49,9 @@ class Store:
   def __get_terms(self):
 
     journal = self.__journal.child('terms')
-    (terms, age) = journal.get_latest(Terms)
+    (terms, fresh) = journal.get_latest(Terms, timedelta(hours = 1))
 
-    if terms is None:
+    if not fresh:
       source = self.__public_scraper.get_terms()
       if source is not None:
         terms = Terms(source)
@@ -76,9 +76,9 @@ class Store:
     term_id = terms.dict[term]
 
     journal = self.__journal.child('terms', term_id, 'subjects')
-    (subjects, age) = journal.get_latest(Subjects)
+    (subjects, fresh) = journal.get_latest(Subjects, timedelta(hours = 1))
 
-    if subjects is None:
+    if not fresh:
       source = self.__public_scraper.get_subjects(term_id = term_id)
       if source is not None:
         subjects = Subjects(source)
@@ -159,16 +159,16 @@ class Journal:
     finally:
       fp.close()
 
-  def get_latest(self, type_):
+  def get_latest(self, type_, shelf_life):
 
     if self.__data is not None:
-      return (self.__data, timedelta())
+      return (self.__data, True)
 
     files = os.listdir(self.dir())
     files = filter(lambda f: os.path.isfile(os.path.join(self.dir(), f)), files)
 
     if len(files) == 0:
-      return (None, None)
+      return (None, False)
 
     filename = max(files)
     full_filename = os.path.join(self.dir(), filename)
@@ -183,4 +183,4 @@ class Journal:
 
     self.__data = data
     age = datetime.utcnow() - datetime.strptime(filename, _timestamp_format)
-    return (data, age)
+    return (data, age < shelf_life)
