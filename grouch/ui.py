@@ -1,6 +1,7 @@
 import argparse
 
 from context import Context
+from model import Term
 from scraper import Scraper
 
 def command_type(value):
