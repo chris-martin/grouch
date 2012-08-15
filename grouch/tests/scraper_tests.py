@@ -18,8 +18,8 @@ def test_get_terms():
   html = read('bwckschd.p_disp_dyn_sched.html')
   terms = scraper.get_terms(html = html)
   assert terms == [
-    { 'id': '201208', 'term': Term(Term.FALL, 2012) },
-    { 'id': '201205', 'term': Term(Term.SUMMER, 2012) },
-    { 'id': '201202', 'term': Term(Term.SPRING, 2012) },
-    { 'id': '201108', 'term': Term(Term.FALL, 2011) },
+    ( Term(Term.FALL, 2012), '201208' ),
+    ( Term(Term.SUMMER, 2012), '201205' ),
+    ( Term(Term.SPRING, 2012), '201202' ),
+    ( Term(Term.FALL, 2011), '201108' ),
   ]
