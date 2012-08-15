@@ -28,11 +28,14 @@ Caching
 
 Grouch keeps cached data in "~/.config/grouch/cache/".
 
-Work in progress: Presently, this cache is never invalidated,
-so you'll have to clear it manually to scrape new information.
+The cache is time-invalidated and is designed to provide
+reasonably current information while avoiding excessive
+server utilization.
 
-If you run ui.py with the --offline flag, it will use the cache
-exclusively, and not attempt to use the network for anything.
+You can set the --refresh flag to ignore the cache timer
+and force server reloads.
+The --offline flag has the opposite effect, utilizing the
+cache exclusively without touching the network at all.
 
 Logging
 -------
