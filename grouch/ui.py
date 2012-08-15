@@ -3,6 +3,7 @@ import argparse
 from context import Context
 from model import Term
 from scraper import Scraper
+from store import Store
 
 def command_type(value):
   if value not in commands:
@@ -31,9 +32,8 @@ def command_list():
 
 @command()
 def terms(args):
-  scraper = Scraper(Context())
-  terms = scraper.get_terms()
-  print('\n'.join(list([ str(t['term']) for t in terms ])))
+  terms = Store().get_terms()
+  print('\n'.join(map(str, terms)))
 
 def main():
 
