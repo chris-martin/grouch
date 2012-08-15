@@ -29,10 +29,11 @@ class Scraper:
 
     t = time.clock()
     response = opener.open(request)
+    body = response.read()
     t = timedelta(seconds = time.clock() - t)
     url = request.get_full_url()
-    self.__context.get_logger().info('%s\n -> %s\n' % (t, url))
-    return response
+    self.__context.get_logger().info('HTTP time: %s\n%s' % (t, url))
+    return (response, body)
 
   #
   # A list of tuples in the form
@@ -44,8 +45,7 @@ class Scraper:
 
     if html is None:
       url = oscar_url('bwckschd.p_disp_dyn_sched')
-      response = self.fetch(Request(url))
-      html = response.read()
+      (response, html) = self.fetch(Request(url))
 
     soup = BeautifulSoup(html)
     select = soup.find('select', { 'id': 'term_input_id' })
@@ -71,14 +71,13 @@ class Scraper:
       if term_id is None:
         raise Exception('either html or term_id is required')
 
-      response = self.fetch(Request(
+      (response, html) = self.fetch(Request(
         url = oscar_url('bwckgens.p_proc_term_date'),
         data = urlencode({
           'p_calling_proc': 'bwckschd.p_disp_dyn_sched',
           'p_term': str(term_id),
         }),
       ))
-      html = response.read()
 
     soup = BeautifulSoup(html)
     select = soup.find('select', { 'id': 'subj_id' })

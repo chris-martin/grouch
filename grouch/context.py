@@ -1,9 +1,7 @@
 import logging
 import os
 
-def makedirs(path):
-  if not os.path.exists(path):
-    os.makedirs(path)
+from util import makedirs
 
 def config_home():
   return os.getenv('XDG_CONFIG_HOME') \
@@ -27,7 +25,7 @@ class Context:
       '%s/log' % self.__config_dir)
 
     formatter = logging.Formatter(
-      '%(asctime)s %(levelname)s %(message)s')
+      '%(asctime)s %(levelname)s - %(message)s\n')
 
     handler.setFormatter(formatter)
     logger.addHandler(handler)
