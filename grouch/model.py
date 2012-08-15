@@ -40,12 +40,14 @@ class Term:
   def __repr__(self):
     return '<Term season=%d year=%d>' % (self.__season, self.__year)
 
+  def __key(self):
+    return (self.__year, self.__season)
+
   def __cmp__(self, other):
-    return (self.__year - other.__year) \
-        or (self.__season - other.__season)
+    return cmp(self.__key(), other.__key())
 
   def __hash__(self):
-    return hash((self.__year, self.__season))
+    return hash(self.__key())
 
 class Subject:
 
@@ -68,5 +70,11 @@ class Subject:
   def __repr__(self):
     return '<Subject id="%s" name="%s">' % (self.__id, self.__name)
 
+  def __key(self):
+    return (self.__id, self.__name)
+
+  def __cmp__(self, other):
+    return cmp(self.__key(), other.__key())
+
   def __hash__(self):
-    return hash((self.__id, self.__name))
+    return hash(self.__key())
