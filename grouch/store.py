@@ -28,9 +28,13 @@ class Store:
       data['term dict'] = dict([ (t['term'], {'id': t['id']}) for t in terms ])
     return data['term list']
 
-  def get_subjects(self, term):
+  def get_subjects(self, term = None):
     data = self.data
     self.get_terms()
+
+    if term is None:
+      term = data['term list'][0]
+
     t = data['term dict'][term]
     if 'subject list' not in t:
       t['subject list'] = self.public_scraper.get_subjects(term_id = t['id'])

@@ -40,14 +40,10 @@ def terms(args):
 
 @command()
 def subjects(args):
-  term = args.term
-  if term is None:
-    err('argument --term is required')
-  else:
-    subjects = Store().get_subjects(term)
-    print('\n'.join(list([
-      '\t'.join((s.get_id(), s.get_name())) for s in subjects
-    ])))
+  subjects = Store().get_subjects(term = args.term)
+  print('\n'.join(list([
+    '\t'.join((s.get_id(), s.get_name())) for s in subjects
+  ])))
 
 def main():
 
@@ -65,7 +61,8 @@ def main():
   parser.add_argument(
     '--term',
     type = term_type,
-    help = 'A semester and year such as "summer 2007"'
+    help = 'A semester and year such as "summer 2007"' \
+      ' (defaults to the latest semester)'
   )
 
   args = parser.parse_args()
