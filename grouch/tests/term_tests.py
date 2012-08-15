@@ -3,20 +3,20 @@ from grouch import Term
 def test_parse_spring():
   term = Term.parse('spring 2012')
   assert term
-  assert term.season == Term.SPRING
-  assert term.year == 2012
+  assert term.get_season() == Term.SPRING
+  assert term.get_year() == 2012
 
 def test_parse_summer():
   term = Term.parse('Summer1998')
   assert term
-  assert term.season == Term.SUMMER
-  assert term.year == 1998
+  assert term.get_season() == Term.SUMMER
+  assert term.get_year() == 1998
 
 def test_parse_fall():
   term = Term.parse('FALL 2039')
   assert term
-  assert term.season == Term.FALL
-  assert term.year == 2039
+  assert term.get_season() == Term.FALL
+  assert term.get_year() == 2039
 
 def test_parse_failure_1():
   assert not Term.parse('')
