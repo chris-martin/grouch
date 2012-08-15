@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML lang="en">
+<HEAD>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<TITLE>Class Schedule Search</TITLE>
+</HEAD>
+<BODY>
+<DIV class="headerwrapperdiv">
+<DIV class="pageheaderdiv1">
+</DIV><DIV class="headerlinksdiv">
+</DIV>
+</DIV>
+<DIV class="pagetitlediv">
+<a name="main_content"></a>
+</DIV>
+<DIV class="pagebodydiv">
+<DIV class="infotextdiv"><P></DIV>
+<FORM ACTION="/pls/bprod/bwckschd.p_get_crse_unsec" METHOD="POST" onSubmit="return checkSubmit()">
+<INPUT TYPE="hidden" NAME="term_in" VALUE="201208">
+<TABLE  CLASS="dataentrytable" SUMMARY="Table is used to present the course search criteria">
+<TR>
+<TD CLASS="delabel" scope="row" ><LABEL for=subj_id><SPAN class="fieldlabeltext">Subject: </SPAN></LABEL></TD>
+<TD COLSPAN="7" CLASS="dedefault">
+<SELECT NAME="sel_subj" SIZE="10" MULTIPLE ID="subj_id">
+<OPTION VALUE="AE">Aerospace Engineering
+<OPTION VALUE="CSE">Computational Science & Engr
+<OPTION VALUE="CS">Computer Science
+<OPTION VALUE="NRE">Nuclear & Radiological Engr
+<OPTION VALUE="SOC">Sociology
+<OPTION VALUE="SPAN">Spanish
+</SELECT>
+</TD>
+</TR>
+</TABLE>
+<TABLE  CLASS="plaintable" style="margin-top:20px;">
+<TR>
+<TD CLASS="pllabel"><LABEL for=crse_id><SPAN class="fieldlabeltext">Course Number: </SPAN></LABEL></TD>
+<TD COLSPAN="7" CLASS="pldefault"><INPUT TYPE="text" NAME="sel_crse" SIZE="6" MAXLENGTH="5" ID="crse_id"></TD>
+</TR>
+<TR>
+<TR>
+<TD CLASS="pllabel"><LABEL for=title_id><SPAN class="fieldlabeltext">Title: </SPAN></LABEL></TD>
+<TD COLSPAN="7" CLASS="pldefault"><INPUT TYPE="text" NAME="sel_title" SIZE="33" MAXLENGTH="30" ID="title_id"></TD>
+</TR>
+<TR>
+<TD CLASS="pllabel"><LABEL for=schd_id><SPAN class="fieldlabeltext">Schedule Type: </SPAN></LABEL></TD>
+<TD COLSPAN="7" CLASS="pldefault">
+<SELECT NAME="sel_schd" SIZE="3" MULTIPLE ID="schd_id">
+<OPTION VALUE="%" SELECTED>All
+<OPTION VALUE="W">Co-op Work Assignment
+<OPTION VALUE="P">Dissertation*
+<OPTION VALUE="A">Lecture*
+<OPTION VALUE="D">Seminar*
+<OPTION VALUE="O">Thesis*
+</SELECT>
+</TD>
+</TR>
+<TR>
+<TD CLASS="pllabel"><LABEL for=credit_id_from><SPAN class="fieldlabeltext">Credit Range: </SPAN></LABEL></TD>
+<TD COLSPAN="7" CLASS="pldefault">
+<INPUT TYPE="text" NAME="sel_from_cred" SIZE="11" MAXLENGTH="10" ID="credit_id_from">
+ hours to
+<LABEL for=credit_id_to><SPAN class="fieldlabeltextinvisible">Credit Range To:</SPAN></LABEL>
+<INPUT TYPE="text" NAME="sel_to_cred" SIZE="11" MAXLENGTH="10" ID="credit_id_to">
+ hours
+</TD>
+</TR>
+<TR>
+<TD CLASS="pllabel"><LABEL for=camp_id><SPAN class="fieldlabeltext">Campus: </SPAN></LABEL></TD>
+<TD COLSPAN="7" CLASS="pldefault">
+<SELECT NAME="sel_camp" SIZE="3" MULTIPLE ID="camp_id">
+<OPTION VALUE="%" SELECTED>All
+<OPTION VALUE="5">Ecole d'Architecture-Paris
+<OPTION VALUE="8">Foreign Exchange
+<OPTION VALUE="SF">Freshman Short Summer Session
+<OPTION VALUE="EM">MBA Evening Program
+<OPTION VALUE="1">Video
+</SELECT>
+</TD>
+</TR>
+<TR>
+<TD CLASS="pllabel"><LABEL for=ptrm_id><SPAN class="fieldlabeltext">Part of Term: </SPAN></LABEL><BR>     <SPAN class="fieldsmalltext">Non-date based courses only</SPAN></TD>
+<TD COLSPAN="7" CLASS="pldefault">
+<SELECT NAME="sel_ptrm" SIZE="3" MULTIPLE ID="ptrm_id">
+<OPTION VALUE="%" SELECTED>All
+<OPTION VALUE="S1">First Half Term
+<OPTION VALUE="D">Full Term - Drops Prohibited
+<OPTION VALUE="1">Full Term Session
+<OPTION VALUE="S2">Second Half Term
+</SELECT>
+</TD>
+</TR>
+<TR>
+<TD CLASS="pllabel"><LABEL for=instr_id><SPAN class="fieldlabeltext">Instructor: </SPAN></LABEL></TD>
+<TD COLSPAN="7" CLASS="pldefault">
+<SELECT NAME="sel_instr" SIZE="3" MULTIPLE ID="instr_id">
+<OPTION VALUE="%" SELECTED>All
+<OPTION VALUE="12540">Burdell, George P.
+<OPTION VALUE="303752">McCracken, William Michael
+<OPTION VALUE="1310271">Starner, Thad E.
+<OPTION VALUE="1063419">Tetali, Prasad
+<OPTION VALUE="1063464">Vazirani, Vijay V
+</SELECT>
+</TD>
+</TR>
+<TR>
+<TD CLASS="pllabel"><LABEL for=attr_id><SPAN class="fieldlabeltext">Attribute Type: </SPAN></LABEL></TD>
+<TD COLSPAN="7" CLASS="pldefault">
+<SELECT NAME="sel_attr" SIZE="3" MULTIPLE ID="attr_id">
+<OPTION VALUE="%" SELECTED>All
+<OPTION VALUE="HUM">Humanities Requirement
+<OPTION VALUE="SS">Social Science Requirement
+</SELECT>
+</TD>
+</TR>
+</TABLE>
+<BR>
+<INPUT TYPE="submit" VALUE="Class Search">
+<INPUT TYPE="reset" VALUE="Reset">
+</FORM>
+</DIV>
+<DIV class="pagefooterdiv">
+</DIV>
+</BODY>
+</HTML>
