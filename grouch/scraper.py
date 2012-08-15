@@ -5,7 +5,7 @@ import time
 from urllib2 import OpenerDirector, HTTPDefaultErrorHandler, \
   HTTPSHandler
 
-from term import Term
+from model import Term
 
 def oscar_url(procedure):
   return 'https://oscar.gatech.edu/pls/bprod/%s' % procedure
