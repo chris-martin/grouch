@@ -2,10 +2,11 @@ from BeautifulSoup import BeautifulSoup
 from datetime import timedelta
 from operator import itemgetter
 import time
-from urllib2 import OpenerDirector, HTTPDefaultErrorHandler, \
-  HTTPSHandler
+from urllib import urlencode
+from urllib2 import Request, OpenerDirector, \
+  HTTPDefaultErrorHandler, HTTPSHandler
 
-from model import Term
+from model import Subject, Term
 
 def oscar_url(procedure):
   return 'https://oscar.gatech.edu/pls/bprod/%s' % procedure
@@ -16,7 +17,7 @@ class Scraper:
     self.context = context
     self.enable_http = enable_http
 
-  def browser_open(self, url, opener = None):
+  def fetch(self, request, opener = None):
 
     if not self.enable_http:
       raise Exception('http is not enabled')
@@ -27,9 +28,9 @@ class Scraper:
       opener.add_handler(HTTPSHandler())
 
     t = time.clock()
-    response = opener.open(url)
+    response = opener.open(request)
     t = timedelta(seconds = time.clock() - t)
-
+    url = request.get_full_url()
     self.context.logger.info('%s\n -> %s\n' % (t, url))
     return response
 
@@ -48,7 +49,7 @@ class Scraper:
 
     if html is None:
       url = oscar_url('bwckschd.p_disp_dyn_sched')
-      response = self.browser_open(url)
+      response = self.fetch(Request(url))
       html = response.read()
 
     soup = BeautifulSoup(html)
@@ -66,4 +67,43 @@ class Scraper:
 
     options = list(iter_options())
     options.sort(key = itemgetter('term'), reverse = True)
+    return options
+
+  #
+  # Returns a list of terms, each given in the form
+  # { 'id': 'CS', 'name': 'Computer Science' },
+  # sorted by name.
+  #
+  # This method performs one http request, without
+  # authentication.
+  #
+  def get_subjects(self, html = None, term_id = None):
+
+    if html is None:
+
+      if term_id is None:
+        raise Exception('either html or term_id is required')
+
+      response = self.fetch(Request(
+        url = oscar_url('bwckgens.p_proc_term_date'),
+        data = urlencode({
+          'p_calling_proc': 'bwckschd.p_disp_dyn_sched',
+          'p_term': str(term_id),
+        }),
+      ))
+      html = response.read()
+
+    soup = BeautifulSoup(html)
+    select = soup.find('select', { 'id': 'subj_id' })
+
+    def iter_options():
+      for o in select.findAll('option'):
+        attrs = dict(o.attrs)
+        yield Subject(
+          id = attrs['value'],
+          name = o.text,
+        )
+
+    options = list(iter_options())
+    options.sort(key = lambda x: x.get_name())
     return options

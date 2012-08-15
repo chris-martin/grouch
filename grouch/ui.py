@@ -5,6 +5,9 @@ from model import Term
 from scraper import Scraper
 from store import Store
 
+def err(x):
+  sys.stderr.write('%s\n' % x)
+
 def command_type(value):
   if value not in commands:
     raise argparse.ArgumentTypeError('must be one of: %s' \
@@ -34,6 +37,17 @@ def command_list():
 def terms(args):
   terms = Store().get_terms()
   print('\n'.join(map(str, terms)))
+
+@command()
+def subjects(args):
+  term = args.term
+  if term is None:
+    err('argument --term is required')
+  else:
+    subjects = Store().get_subjects(term)
+    print('\n'.join(list([
+      '\t'.join((s.get_id(), s.get_name())) for s in subjects
+    ])))
 
 def main():
 
