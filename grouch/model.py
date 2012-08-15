@@ -44,6 +44,9 @@ class Term:
     return (self.__year - other.__year) \
         or (self.__season - other.__season)
 
+  def __hash__(self):
+    return hash((self.__year, self.__season))
+
 class Subject:
 
   def __init__(self, id, name):
@@ -64,3 +67,6 @@ class Subject:
 
   def __repr__(self):
     return '<Subject id="%s" name="%s">' % (self.__id, self.__name)
+
+  def __hash__(self):
+    return hash((self.__id, self.__name))
