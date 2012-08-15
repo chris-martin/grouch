@@ -2,7 +2,7 @@ import re
 
 _names = ['spring', 'summer', 'fall']
 
-_pattern = re.compile('^([a-z]+) ([0-9]{4})$')
+_pattern = re.compile('^([a-z]+)[ ]*([0-9]{4})$')
 
 class Term:
 

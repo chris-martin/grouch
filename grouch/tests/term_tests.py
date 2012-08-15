@@ -7,7 +7,7 @@ def test_parse_spring():
   assert term.year == 2012
 
 def test_parse_summer():
-  term = Term.parse('Summer 1998')
+  term = Term.parse('Summer1998')
   assert term
   assert term.season == Term.SUMMER
   assert term.year == 1998
