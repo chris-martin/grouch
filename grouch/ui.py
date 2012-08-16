@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 
 from context import Context
@@ -37,8 +38,20 @@ def command_list():
   x.sort()
   return x
 
+def log_handler():
+  handler = logging.StreamHandler(sys.stdout)
+  formatter = logging.Formatter(
+    '%(asctime)s %(levelname)s - %(message)s\n')
+  handler.setFormatter(formatter)
+  return handler
+
 def store(args):
+  context = Context()
+  if args.verbose:
+    print ''
+    context.get_logger().addHandler(log_handler())
   return Store(
+    context = context,
     enable_http = args.enable_http,
     force_refresh = args.refresh,
   )
@@ -93,6 +106,12 @@ def main():
     action = 'store_true',
     help = 'Fetch the most recent information from the ' \
       'server, regardless of the cache state'
+  )
+
+  parser.add_argument(
+    '--verbose',
+    action = 'store_true',
+    help = 'Print logging output',
   )
 
   args = parser.parse_args()

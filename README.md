@@ -41,4 +41,5 @@ Logging
 -------
 
 HTTP and filesystem activity is logged to "~/.config/grouch/log".
+Use the --verbose flag to also log to the console.
 
