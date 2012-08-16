@@ -45,28 +45,17 @@ def log_handler():
   handler.setFormatter(formatter)
   return handler
 
-def store(args):
-  context = Context()
-  if args.verbose:
-    print ''
-    context.get_logger().addHandler(log_handler())
-  return Store(
-    context = context,
-    enable_http = args.enable_http,
-    force_refresh = args.refresh,
-  )
-
 @command()
-def terms(args):
-  terms = store(args).get_terms()
+def terms(args, store):
+  terms = store.get_terms()
   if terms is None:
     not_available()
   else:
     print('\n'.join(map(str, terms)))
 
 @command()
-def subjects(args):
-  subjects = store(args).get_subjects(term = args.term)
+def subjects(args, store):
+  subjects = store.get_subjects(term = args.term)
   if subjects is None:
     not_available()
   else:
@@ -85,6 +74,7 @@ def main():
     type = command_type,
     help = 'One of the following options: %s' \
       % ', '.join(command_list()),
+    nargs = '?',
   )
 
   parser.add_argument(
@@ -92,6 +82,13 @@ def main():
     type = term_type,
     help = 'A semester and year such as "summer 2007"' \
       ' (defaults to the latest term)',
+    metavar = '',
+  )
+
+  parser.add_argument(
+    '--subject',
+    help = 'A subject such as "cs" or "comp sci"',
+    metavar = '',
   )
 
   parser.add_argument(
@@ -114,9 +111,38 @@ def main():
     help = 'Print logging output',
   )
 
+  parser.add_argument(
+    '--quiet',
+    dest = 'chatty',
+    action = 'store_false',
+    help = 'Do not print anything beyond the output '
+      'requested by the command'
+  )
+
   args = parser.parse_args()
 
-  args.command(args)
+  context = Context()
+
+  if args.chatty or args.verbose:
+    print ''
+
+  if args.verbose:
+    context.get_logger().addHandler(log_handler())
+
+  store = Store(
+    context = context,
+    enable_http = args.enable_http,
+    force_refresh = args.refresh,
+  )
+
+  if args.subject is not None:
+    subject = store.find_subject(args.subject)
+    if args.chatty:
+      print('Subject: %s\n' % unicode(subject))
+    args.subject = subject
+
+  if args.command:
+    args.command(args, store)
 
 if __name__ == '__main__':
   main()

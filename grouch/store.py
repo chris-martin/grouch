@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-import pickle
+import difflib
 import os, os.path
+import pickle
 import string
 
 from context import Context
@@ -96,6 +97,13 @@ class Store:
       shelf_life = timedelta(hours = 1),
       alternative = scrape)
 
+  def find_subject(self, s, term = None):
+
+    subjects = self.__get_subjects(term)
+
+    if subjects is not None:
+      return subjects.find(s)
+
 _timestamp_format = '%Y-%m-%d-%H-%M-%S-%f'
 
 class Terms:
@@ -126,6 +134,23 @@ class Subjects:
   @staticmethod
   def load(fp):
     return Subjects(pickle.load(fp))
+
+  def find(self, s):
+    s = s.upper()
+
+    for subject in self.list:
+      if s == subject.get_id():
+        return subject
+
+    subject_names = list([ subject.get_name().upper()
+      for subject in self.list ])
+    matches = difflib.get_close_matches(s, subject_names, n = 1)
+
+    if len(matches) != 0:
+      subject_name = matches[0]
+      for subject in self.list:
+        if subject_name == subject.get_name().upper():
+          return subject
 
 def _safe_str(x):
   return character_whitelist(
