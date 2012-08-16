@@ -26,20 +26,20 @@ ASE     Applied Systems Engineering
 Caching
 -------
 
-Grouch keeps cached data in "~/.config/grouch/cache/".
+Grouch keeps cached data in ```~/.config/grouch/cache/```.
 
 The cache is time-invalidated and is designed to provide
 reasonably current information while avoiding excessive
 server utilization.
 
-You can set the --refresh flag to ignore the cache timer
+You can set the ```--refresh``` flag to ignore the cache timer
 and force server reloads.
-The --offline flag has the opposite effect, utilizing the
+The ```--offline``` flag has the opposite effect, utilizing the
 cache exclusively without touching the network at all.
 
 Logging
 -------
 
-HTTP and filesystem activity is logged to "~/.config/grouch/log".
-Use the --verbose flag to also log to the console.
+HTTP and filesystem activity is logged to ```~/.config/grouch/log```.
+Use the ```--verbose``` flag to also log to the console.
 
