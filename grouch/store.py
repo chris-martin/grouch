@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 import pickle
 import os, os.path
+import string
 
 from context import Context
 from scraper import Scraper
-from util import makedirs
+from util import character_whitelist, makedirs
 
 class Store:
 
@@ -16,7 +17,6 @@ class Store:
 
     self.__context = context
     self.__enable_http = enable_http
-    self.__force_refresh = force_refresh
     self.__private_scrapers = {}
 
     self.__public_scraper = Scraper(
@@ -25,7 +25,8 @@ class Store:
     )
 
     self.__journal = Journal(
-      context = context
+      context = context,
+      force_refresh = force_refresh,
     )
 
   def add_private_scraper(username, password):
@@ -48,20 +49,24 @@ class Store:
 
   def __get_terms(self):
 
-    journal = self.__journal.child('terms')
-
-    terms = None
-
-    if not self.__force_refresh:
-      (terms, fresh) = journal.get_latest(Terms, timedelta(hours = 1))
-
-    if self.__force_refresh or not fresh:
+    def scrape():
       source = self.__public_scraper.get_terms()
       if source is not None:
-        terms = Terms(source)
-        journal.put(terms)
+        return Terms(source)
 
-    return terms
+    journal = self.__journal.child('terms')
+
+    return journal.get(Terms,
+      shelf_life = timedelta(hours = 1),
+      alternative = scrape)
+
+  def __get_term_id(self, term = None):
+    terms = self.__get_terms()
+    if terms is None:
+      return None
+    if term is None:
+      term = terms.list[0]
+    return terms.dict[term]
 
   #
   # A list of Subjects, sorted by name.
@@ -75,30 +80,21 @@ class Store:
 
   def __get_subjects(self, term = None):
 
-    terms = self.__get_terms()
+    term_id = self.__get_term_id(term)
 
-    if terms is None:
+    if term_id is None:
       return None
 
-    if term is None:
-      term = terms.list[0]
-
-    term_id = terms.dict[term]
+    def scrape():
+      source = self.__public_scraper.get_subjects(term_id = term_id)
+      if source is not None:
+        return Subjects(source)
 
     journal = self.__journal.child('terms', term_id, 'subjects')
 
-    subjects = None
-
-    if not self.__force_refresh:
-      (subjects, fresh) = journal.get_latest(Subjects, timedelta(hours = 1))
-
-    if self.__force_refresh or not fresh:
-      source = self.__public_scraper.get_subjects(term_id = term_id)
-      if source is not None:
-        subjects = Subjects(source)
-        journal.put(subjects)
-
-    return subjects
+    return journal.get(Subjects,
+      shelf_life = timedelta(hours = 1),
+      alternative = scrape)
 
 _timestamp_format = '%Y-%m-%d-%H-%M-%S-%f'
 
@@ -131,21 +127,33 @@ class Subjects:
   def load(fp):
     return Subjects(pickle.load(fp))
 
+def _safe_str(x):
+  return character_whitelist(
+    str(x),
+    string.ascii_letters + string.digits + '_-'
+  )
+
 class Journal:
 
-  def __init__(self, context, path = None):
+  def __init__(self, context, force_refresh, path = None):
     self.__context = context
+    self.__force_refresh = force_refresh
     self.__path = path or []
     self.__children = {}
+    self.__known = False
     self.__data = None
 
   def child(self, *path):
     if len(path) == 0:
       return self
+    head = _safe_str(path[0])
+    if len(head) == 0:
+      raise Exception('bad path')
     if path[0] not in self.__children:
-      self.__children[path[0]] = Journal(
+      self.__children[head] = Journal(
         context = self.__context,
-        path = self.__path + [ path[0] ],
+        force_refresh = self.__force_refresh,
+        path = self.__path + [ head ],
       )
     return self.__children[path[0]].child(*path[1:])
 
@@ -158,9 +166,26 @@ class Journal:
     makedirs(d)
     return d
 
+  def __filename(self):
+
+    def is_file(f):
+      full_filename = os.path.join(self.dir(), f)
+      return os.path.isfile(full_filename)
+
+    # List the files in this Journal's directory.
+    files = filter(is_file, os.listdir(self.dir()))
+
+    # The most recent file has the highest lexicographical name.
+    if len(files) != 0:
+      return max(files)
+
+  def __know(self, data):
+    self.__data = data
+    self.__known = True
+
   def put(self, data):
 
-    self.__data = data
+    self.__know(data)
     now = datetime.utcnow()
     filename = os.path.join(self.dir(), now.strftime(_timestamp_format))
 
@@ -172,28 +197,71 @@ class Journal:
     finally:
       fp.close()
 
-  def get_latest(self, type_, shelf_life):
+  def get(self, type_, shelf_life, alternative):
 
-    if self.__data is not None:
-      return (self.__data, True)
+    # If data is cached in memory, always use that. Store objects
+    # are intended to be used ephemerally, so we do not anticipate
+    # any need to look up the same information more than once.
+    if self.__known:
+      return self.__data
 
-    files = os.listdir(self.dir())
-    files = filter(lambda f: os.path.isfile(os.path.join(self.dir(), f)), files)
+    # Memoize the alternative function; we might call it twice.
+    alternative = Memo(alternative)
 
-    if len(files) == 0:
-      return (None, False)
+    # If refresh is forced, immediately attempt to use the alternate.
+    if self.__force_refresh:
+      a = alternative()
+      if a is not None:
+        self.put(a)
+        return a
 
-    filename = max(files)
-    full_filename = os.path.join(self.dir(), filename)
+    # Look in the directory to find a sufficiently recent file.
+    filename = self.__filename()
+    def fresh_file_exists():
+      if filename is None:
+        return False
+      then = datetime.strptime(filename, _timestamp_format)
+      age = datetime.utcnow() - then
+      return age < shelf_life
 
-    self.__context.get_logger().info('Load\n%s' % full_filename)
+    # If a recent file does not exist, attempt to use the alternate.
+    if not fresh_file_exists():
+      a = alternative()
+      if a is not None:
+        self.put(a)
+        return a
 
-    fp = open(full_filename, 'r')
-    try:
-      data = type_.load(fp)
-    finally:
-      fp.close()
+    # If some file exists, use it.
+    if filename is not None:
+      full_filename = os.path.join(self.dir(), filename)
+      self.__context.get_logger().info('Load\n%s' % full_filename)
+      fp = open(full_filename, 'r')
+      try:
+        data = type_.load(fp)
+      finally:
+        fp.close()
+      self.__know(data)
+      return data
 
-    self.__data = data
-    age = datetime.utcnow() - datetime.strptime(filename, _timestamp_format)
-    return (data, age < shelf_life)
+    # Alternate and file approaches have both failed.
+    self.__know(None)
+
+#
+# Memoizes a value function.
+#
+class Memo:
+
+  def __init__(self, fn):
+    self.__fn = fn
+    self.__value = None
+    self.__executed = False
+
+  def __call__(self):
+    if self.__executed:
+      return self.__value
+
+    value = self.__fn()
+    self.__fn = None
+    self.__value = value
+    self.__executed = True
+    return value
