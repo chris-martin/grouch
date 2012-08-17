@@ -14,6 +14,11 @@ from util import grouper
 def oscar_url(procedure):
   return 'https://oscar.gatech.edu/pls/bprod/%s' % procedure
 
+# Use this regex to identify a course number.
+# Some lists contain pseudo-courses such as "3XXX".
+# We have no use for those, and this will not match them.
+course_number_re_fragment = '[0-9]{4}'
+
 class Scraper:
 
   def __init__(self, context, enable_http = True):
@@ -170,10 +175,20 @@ class Scraper:
 
   def scrape_courses_html(self, html):
 
+    # Don't try to parse HTML with regular expressions, right?
+    # Unfortunately, since Oscar doesn't believe in closing <tr>
+    # tags, BeautifulSoup does not parse this table intelligibly.
+
+    # This page consists of one giant single-column table.
+    # Each course is represented by two consecutive rows.
+    # The first row contains the course number and title.
+    # The second row contains the description, plus some other things.
+
     def join(x): return map(lambda y: ''.join(y), x)
     rows = join(grouper(2, re.split('(<TR)', html)[1:]))
 
-    title_re = re.compile('.*CLASS="nttitle".*>[A-Z]+ ([0-9]{4}) - (.*)</A></TD>.*')
+    title_re = re.compile('.*CLASS="nttitle".*>[A-Z]+ ('
+      + course_number_re_fragment + ') - (.*)</A></TD>.*')
 
     def iter_courses():
       for (row1, row2) in grouper(2, rows):
@@ -218,7 +233,7 @@ class Scraper:
       if node is not None:
         return unescape(node.text)
 
-    number_re = re.compile('^[0-9]{4}$')
+    number_re = re.compile('^' + course_number_re_fragment + '$')
 
     def iter_courses():
       for inventory in soup.findAll('courseinventory'):
