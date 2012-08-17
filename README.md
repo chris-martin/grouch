@@ -23,6 +23,24 @@ APPH    Applied Physiology
 ASE     Applied Systems Engineering
 ```
 
+```
+$ python grouch/ui.py courses --subject computars | head -n 15
+
+Subject: CS Computer Science
+
+1050  Constructing Proofs
+
+      Techniques of rigorous argumentation, emphasizing reading and
+      writing of formal and informal proofs.  Application of
+      techniques to domains of relevance to computer science.
+
+1100  Freshman Leap Seminar
+
+      Small group discussions with first year students are led by one
+      or more faculty members and include a variety of foundational,
+      motivational, and topical subjects for computationalist.
+```
+
 Caching
 -------
 

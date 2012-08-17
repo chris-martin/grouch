@@ -89,7 +89,8 @@ def courses(args, store):
         print('')
         d = course['description']
         if d is not None:
-          print('\n'.join(wrapper.wrap(d)))
+          for line in wrapper.wrap(d):
+            print line
           print('')
 
 @command()
