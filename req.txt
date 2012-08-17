@@ -1,5 +1,6 @@
 BeautifulSoup==3.2.1
 argparse==1.2.1
 distribute==0.6.24
+html2text==3.200.3
 mechanize==0.2.5
 wsgiref==0.1.2

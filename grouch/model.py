@@ -1,6 +1,6 @@
 import re
 
-_names = ['spring', 'summer', 'fall']
+_names = [u'spring', u'summer', u'fall']
 
 _pattern = re.compile('^([a-z]+)[ ]*([0-9]{4})$')
 

@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+from textwrap import TextWrapper
 
 from context import Context
 from model import Term
@@ -51,7 +52,8 @@ def terms(args, store):
   if terms is None:
     not_available()
   else:
-    print('\n'.join(map(str, terms)))
+    for term in terms:
+      print(str(term))
 
 @command()
 def subjects(args, store):
@@ -59,9 +61,46 @@ def subjects(args, store):
   if subjects is None:
     not_available()
   else:
-    print('\n'.join(list([
-      '\t'.join((s.get_id(), s.get_name())) for s in subjects
-    ])))
+    for s in subjects:
+      print('\t'.join((s.get_id(), s.get_name())))
+
+@command()
+def courses(args, store):
+  if args.subject is None:
+    err('--subject is required')
+  else:
+    courses = store.get_courses(
+      term = args.term,
+      subject = args.subject,
+    )
+    if courses is None:
+      not_available()
+    else:
+      pad = 2
+      wrapper = TextWrapper(
+        initial_indent = ' ' * (4 + pad),
+        subsequent_indent = ' ' * (4 + pad),
+      )
+      for course in courses:
+        print((' ' * pad).join((
+          course['number'],
+          course['name'],
+        )))
+        print('')
+        d = course['description']
+        if d is not None:
+          print('\n'.join(wrapper.wrap(d)))
+          print('')
+
+@command()
+def sections(args, store):
+  if args.subject is None:
+    err('--subject is required')
+  else:
+    print(store.get_sections(
+      term = args.term,
+      subject = args.subject,
+    ))
 
 def main():
 
@@ -123,7 +162,7 @@ def main():
 
   context = Context()
 
-  if args.chatty or args.verbose:
+  if args.chatty:
     print ''
 
   if args.verbose:
@@ -143,6 +182,9 @@ def main():
 
   if args.command:
     args.command(args, store)
+
+  if args.chatty:
+    print ''
 
 if __name__ == '__main__':
   main()

@@ -30,13 +30,20 @@ class Store:
       force_refresh = force_refresh,
     )
 
-  def add_private_scraper(username, password):
+  def add_private_scraper(self, username, password):
     self.__private_scrapers[username] = Scraper(
       context = self.__context,
       enable_http = self.__enable_http,
       username = username,
       password = password,
     )
+
+  def get_scraper(self, username = None):
+    if username is not None:
+      if username in self.__private_scrapers:
+        return self.__private_scrapers[username]
+    else:
+      return self.__public_scraper
 
   #
   # A list of Terms, sorted by chronology in reverse.
@@ -51,14 +58,14 @@ class Store:
   def __get_terms(self):
 
     def scrape():
-      source = self.__public_scraper.get_terms()
+      source = self.get_scraper().get_terms()
       if source is not None:
         return Terms(source)
 
     journal = self.__journal.child('terms')
 
     return journal.get(Terms,
-      shelf_life = timedelta(hours = 1),
+      shelf_life = timedelta(days = 1),
       alternative = scrape)
 
   def __get_term_id(self, term = None):
@@ -74,7 +81,7 @@ class Store:
   #
   def get_subjects(self, term = None):
 
-    subjects = self.__get_subjects()
+    subjects = self.__get_subjects(term)
 
     if subjects is not None:
       return subjects.list
@@ -87,14 +94,14 @@ class Store:
       return None
 
     def scrape():
-      source = self.__public_scraper.get_subjects(term_id = term_id)
+      source = self.get_scraper().get_subjects(term_id = term_id)
       if source is not None:
         return Subjects(source)
 
     journal = self.__journal.child('terms', term_id, 'subjects')
 
     return journal.get(Subjects,
-      shelf_life = timedelta(hours = 1),
+      shelf_life = timedelta(days = 1),
       alternative = scrape)
 
   def find_subject(self, s, term = None):
@@ -103,6 +110,49 @@ class Store:
 
     if subjects is not None:
       return subjects.find(s)
+
+  def get_courses(self, subject, term = None):
+
+    courses = self.__get_courses(subject, term)
+
+    if courses is not None:
+      return courses.source
+
+  def __get_courses(self, subject, term = None):
+
+    term_id = self.__get_term_id(term)
+
+    if term_id is None:
+      return None
+
+    subject_id = subject.get_id()
+
+    def scrape():
+      source = self.get_scraper().get_courses(
+        subject_id = subject_id,
+        term_id = term_id,
+      )
+      if source is not None:
+        return Courses(source)
+
+    journal = self.__journal.child('terms', term_id,
+      'subject', subject_id, 'courses')
+
+    return journal.get(Courses,
+      shelf_life = timedelta(hours = 6),
+      alternative = scrape)
+
+  def get_sections(self, subject, term = None):
+
+    term_id = self.__get_term_id(term)
+
+    if term_id is None:
+      return None
+
+    return self.get_scraper().get_sections(
+      subject_id = subject.get_id(),
+      term_id = term_id,
+    )
 
 _timestamp_format = '%Y-%m-%d-%H-%M-%S-%f'
 
@@ -151,6 +201,18 @@ class Subjects:
       for subject in self.list:
         if subject_name == subject.get_name().upper():
           return subject
+
+class Courses:
+
+  def __init__(self, source):
+    self.source = source
+
+  def dump(self, fp):
+    pickle.dump(self.source, fp)
+
+  @staticmethod
+  def load(fp):
+    return Courses(pickle.load(fp))
 
 def _safe_str(x):
   return character_whitelist(

@@ -1,12 +1,15 @@
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup, BeautifulStoneSoup
 from datetime import timedelta
+from html2text import unescape
 from operator import itemgetter
+import re
 import time
 from urllib import urlencode
 from urllib2 import Request, OpenerDirector, \
   HTTPDefaultErrorHandler, HTTPSHandler
 
 from model import Subject, Term
+from util import grouper
 
 def oscar_url(procedure):
   return 'https://oscar.gatech.edu/pls/bprod/%s' % procedure
@@ -20,7 +23,7 @@ class Scraper:
   def fetch(self, request, opener = None):
 
     if not self.__enable_http:
-      raise Exception('http is not enabled')
+      return (None, None)
 
     if opener is None:
       opener = OpenerDirector()
@@ -35,21 +38,28 @@ class Scraper:
     self.__context.get_logger().info('HTTP time: %s\n%s' % (t, url))
     return (response, body)
 
+  def fetch_body(self, *args, **kwargs):
+    (response, body) = self.fetch(*args, **kwargs)
+    return body
+
+  #
+  # Terms
+  # -------------------------------------------------------------
   #
   # A list of tuples in the form
   # ( Term(Term.FALL, 2012), '201208' ).
   #
-  # Performs one http request, without authentication.
-  #
-  def get_terms(self, html = None):
 
-    if html is None:
+  def get_terms(self):
+    html = self.fetch_terms_html()
+    if html is not None:
+      return self.scrape_terms_html()
 
-      if not self.__enable_http:
-        return None
+  def fetch_terms_html(self):
+    url = oscar_url('bwckschd.p_disp_dyn_sched')
+    return self.fetch_body(Request(url))
 
-      url = oscar_url('bwckschd.p_disp_dyn_sched')
-      (response, html) = self.fetch(Request(url))
+  def scrape_terms_html(self, html):
 
     soup = BeautifulSoup(html)
     select = soup.find('select', { 'id': 'term_input_id' })
@@ -64,27 +74,27 @@ class Scraper:
     return list(iter_options())
 
   #
-  # A list of Subjects.
+  # Subjects
+  # -------------------------------------------------------------
   #
-  # Performs one http request, without authentication.
+  # A list of Subject objects.
   #
-  def get_subjects(self, html = None, term_id = None):
 
-    if html is None:
+  def get_subjects(self, term_id):
+    html = self.fetch_subjects_html(term_id)
+    if html is not None:
+      return self.scrape_subjects_html(html)
 
-      if term_id is None:
-        raise Exception('either html or term_id is required')
+  def fetch_subjects_html(self, term_id):
+    return self.fetch_body(Request(
+      url = oscar_url('bwckgens.p_proc_term_date'),
+      data = urlencode([
+        ('p_calling_proc', 'bwckschd.p_disp_dyn_sched'),
+        ('p_term', str(term_id)),
+      ]),
+    ))
 
-      if not self.__enable_http:
-        return None
-
-      (response, html) = self.fetch(Request(
-        url = oscar_url('bwckgens.p_proc_term_date'),
-        data = urlencode({
-          'p_calling_proc': 'bwckschd.p_disp_dyn_sched',
-          'p_term': str(term_id),
-        }),
-      ))
+  def scrape_subjects_html(self, html):
 
     soup = BeautifulSoup(html)
     select = soup.find('select', { 'id': 'subj_id' })
@@ -98,3 +108,170 @@ class Scraper:
         )
 
     return list(iter_options())
+
+  #
+  # Courses
+  # -------------------------------------------------------------
+  #
+  # A list of dicts with keys (number, name, description).
+  #
+  # This scrape has two methods: 'html', and 'xml' as a fallback.
+  # Defaults to html first because I have observed that the XML
+  # method, although easier to scrape, may contain less data.
+  # For example, the course description for CS 4911 is missing
+  # from the XML but present in the HTML.
+  #
+  def get_courses(self, term_id = None, subject_id = None, methods = None):
+
+    if methods is None:
+      methods = ['html', 'xml']
+
+    def use_html():
+      html = self.fetch_courses_html(term_id, subject_id)
+      return self.scrape_courses_xml(html)
+
+    def use_xml():
+      xml = self.fetch_courses_xml(term_id, subject_id)
+      return self.scrape_courses_xml(xml)
+
+    method_dict = { 'html': use_html, 'xml': use_xml }
+
+    for method in methods:
+      courses = method_dict[method]()
+      if len(courses) != 0:
+        return courses
+
+  def fetch_courses_html(self, term_id, subject_id):
+    return self.fetch_body(Request(
+      url = oscar_url('bwckctlg.p_display_courses'),
+      data = urlencode([
+        ('term_in', term_id),
+        ('sel_subj', 'dummy'),
+        ('sel_levl', 'dummy'),
+        ('sel_schd', 'dummy'),
+        ('sel_coll', 'dummy'),
+        ('sel_divs', 'dummy'),
+        ('sel_dept', 'dummy'),
+        ('sel_attr', 'dummy'),
+        ('sel_subj', subject_id),
+        ('sel_crse_strt', ''),
+        ('sel_crse_end', ''),
+        ('sel_title', ''),
+        ('sel_levl', '%'),
+        ('sel_schd', '%'),
+        ('sel_coll', '%'),
+        ('sel_divs', '%'),
+        ('sel_dept', '%'),
+        ('sel_from_cred', ''),
+        ('sel_to_cred', ''),
+        ('sel_attr', '%'),
+      ]),
+    ))
+
+  def scrape_courses_html(self, html):
+
+    def join(x): return map(lambda y: ''.join(y), x)
+    rows = join(grouper(2, re.split('(<TR)', html)[1:]))
+
+    title_re = re.compile('.*CLASS="nttitle".*>[A-Z]+ ([0-9]{4}) - (.*)</A></TD>.*')
+
+    def iter_courses():
+      for (row1, row2) in grouper(2, rows):
+        course = {}
+        match = title_re.match(row1.replace('\n', ''))
+        if match is None: continue
+        course['number'] = match.group(1)
+        course['name'] = match.group(2)
+        soup = BeautifulSoup(row2)
+        td = soup.find('td')
+        d = td.contents[0].strip().replace('\n', ' ') or None
+        course['description'] = d
+        yield course
+
+    return list(iter_courses())
+
+  def fetch_courses_xml(self, term_id, subject_id):
+    return self.fetch_body(Request(
+      url = oscar_url('bwckctlg.xml'),
+      data = urlencode([
+        ('term_in', term_id),
+        ('subj_in', '\t%s\t' % subject_id),
+        ('title_in', '%%'),
+        ('divs_in', '%'),
+        ('dept_in', '%'),
+        ('coll_in', '%'),
+        ('schd_in', '%'),
+        ('levl_in', '%'),
+        ('attr_in', '%'),
+        ('crse_strt_in', ''),
+        ('crse_end_in', ''),
+        ('cred_from_in', ''),
+        ('cred_to_in', ''),
+        ('last_updated', ''),
+      ]),
+    ))
+
+  def scrape_courses_xml(self, xml):
+
+    soup = BeautifulStoneSoup(xml)
+    def text(node):
+      if node is not None:
+        return unescape(node.text)
+
+    number_re = re.compile('^[0-9]{4}$')
+
+    def iter_courses():
+      for inventory in soup.findAll('courseinventory'):
+        def inventory_text(name):
+          return text(inventory.find(name))
+        number = inventory_text('coursenumber')
+        if number_re.match(number):
+          yield {
+            'number': number,
+            'name': inventory_text('courselongtitle'),
+            'description': inventory_text('coursedescription'),
+          }
+
+    return list(iter_courses())
+
+  #
+  # Sections
+  # -------------------------------------------------------------
+  #
+  # Work in progress.
+  #
+
+  def fetch_sections_html(self, term_id, subject_id):
+
+    return self.fetch_body(Request(
+      url = oscar_url('bwckschd.p_get_crse_unsec'),
+      data = urlencode([
+        ('term_in', term_id),
+        ('sel_subj', 'dummy'),
+        ('sel_day', 'dummy'),
+        ('sel_schd', 'dummy'),
+        ('sel_insm', 'dummy'),
+        ('sel_camp', 'dummy'),
+        ('sel_levl', 'dummy'),
+        ('sel_sess', 'dummy'),
+        ('sel_instr', 'dummy'),
+        ('sel_ptrm', 'dummy'),
+        ('sel_attr', 'dummy'),
+        ('sel_subj', subject_id),
+        ('sel_crse', ''),
+        ('sel_title', ''),
+        ('sel_schd', '%'),
+        ('sel_from_cred', ''),
+        ('sel_to_cred', ''),
+        ('sel_camp', '%'),
+        ('sel_ptrm', '%'),
+        ('sel_instr', '%'),
+        ('sel_attr', '%'),
+        ('begin_hh', '0'),
+        ('begin_mi', '0'),
+        ('begin_ap', 'a'),
+        ('end_hh', '0'),
+        ('end_mi', '0'),
+        ('end_ap', 'a'),
+      ]),
+    ))
