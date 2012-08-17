@@ -58,7 +58,7 @@ class Scraper:
   def get_terms(self):
     html = self.fetch_terms_html()
     if html is not None:
-      return self.scrape_terms_html()
+      return self.scrape_terms_html(html)
 
   def fetch_terms_html(self):
     url = oscar_url('bwckschd.p_disp_dyn_sched')
