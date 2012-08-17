@@ -8,4 +8,5 @@ setup(
   author_email = 'ch.martin@gmail.com',
   url = 'https://github.com/chris-martin/grouch',
   packages = [ 'grouch' ],
+  scripts = [ 'scripts/grouch' ],
 )

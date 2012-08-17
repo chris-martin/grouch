@@ -7,7 +7,7 @@ Usage Examples
 --------------
 
 ```
-$ python grouch/ui.py terms
+$ grouch terms
 
 Fall 2012
 Summer 2012
@@ -16,7 +16,7 @@ Fall 2011
 ```
 
 ```
-$ python grouch/ui.py subjects | head -n 5
+$ grouch subjects | head -n 5
 
 ACCT    Accounting
 AE      Aerospace Engineering
@@ -26,7 +26,7 @@ ASE     Applied Systems Engineering
 ```
 
 ```
-$ python grouch/ui.py courses --subject computars | head -n 15
+$ grouch courses --subject computars | head -n 15
 
 Subject: CS Computer Science
 
@@ -42,6 +42,16 @@ Subject: CS Computer Science
       or more faculty members and include a variety of foundational,
       motivational, and topical subjects for computationalist.
 ```
+
+Installation
+------------
+
+```
+python setup.py install
+```
+
+This installs the ```grouch``` Python module and the
+```grouch``` script demonstrated in the examples.
 
 Caching
 -------
