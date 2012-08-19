@@ -57,7 +57,7 @@ class Scraper:
   # -------------------------------------------------------------
   #
   # A list of tuples in the form
-  # ( Term(Term.FALL, 2012), '201208' ).
+  # ( Term(Term.FALL, 2012), u'201208' )
   #
 
   def get_terms(self):
@@ -123,7 +123,11 @@ class Scraper:
   # Courses
   # -------------------------------------------------------------
   #
-  # A list of dicts with keys (number, name, description).
+  # A list of dicts in the form {
+  #   'number': u'1050',
+  #   'name': u'Constructing Proofs',
+  #   'description': u'Techniques of rigorous argumentation.'
+  # }
   #
   # This scrape has two methods: 'html', and 'xml' as a fallback.
   # Defaults to html first because I have observed that the XML
@@ -150,6 +154,9 @@ class Scraper:
       courses = method_dict[method]()
       if len(courses) != 0:
         return courses
+      else:
+        self.__context.get_logger().error(
+          'get_courses (%s) failed' % method)
 
   def fetch_courses_html(self, term_id, subject_id):
     return self.fetch_body(Request(
@@ -258,11 +265,19 @@ class Scraper:
   # Sections
   # -------------------------------------------------------------
   #
-  # Work in progress.
+  # A list of dicts in the form {
+  #   'crn': '87134',
+  #   'course': '2110',
+  #   'name': 'A2',
+  # }
   #
 
-  def fetch_sections_html(self, term_id, subject_id):
+  def get_sections(self, term_id, subject_id):
+    html = self.fetch_sections_html(term_id, subject_id)
+    if html is not None:
+      return self.scrape_sections_html(html)
 
+  def fetch_sections_html(self, term_id, subject_id):
     return self.fetch_body(Request(
       url = oscar_url('bwckschd.p_get_crse_unsec'),
       data = urlencode([
@@ -295,3 +310,26 @@ class Scraper:
         ('end_ap', 'a'),
       ]),
     ))
+
+  def scrape_sections_html(self, html):
+
+    def join(x): return map(lambda y: ''.join(y), x)
+    rows = join(grouper(2, re.split(
+      '(<TR>\n<TH CLASS="ddtitle")', html)[1:]))
+
+    title_re = re.compile('.*<TH CLASS="ddtitle".*><A .*>'
+      '.* - ([0-9]+) - .* (' + course_number_re_fragment + ')'
+      ' - ([A-Za-z0-9]+)</A></TH>')
+
+    def iter_sections():
+      for row in rows:
+        section = {}
+        match = title_re.match(row.replace('\n', ''))
+        if match is None: continue
+        yield {
+          'crn': match.group(1),
+          'course': match.group(2),
+          'name': match.group(3),
+        }
+
+    return list(iter_sections())

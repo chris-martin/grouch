@@ -90,7 +90,7 @@ class Course:
     self.__subject_id = subject_id
     self.__number = number
 
-  def get_subject_id(self):
+  def get_subject(self):
     return self.__subject_id
 
   def get_number(self):

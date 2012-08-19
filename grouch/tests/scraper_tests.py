@@ -88,3 +88,29 @@ def test_get_courses_html():
   html = read('bwckctlg.p_display_courses.html')
   courses = scraper.scrape_courses_html(html)
   assert_list_equal(courses, courses_expected())
+
+# sections
+
+def sections_expected():
+  def section(course, name, crn):
+    return {
+      'course': course,
+      'name': name,
+      'crn': crn,
+    }
+  return [
+    section(u'2110', u'A1', u'87133'),
+    section(u'2110', u'A2', u'87134'),
+    section(u'3451', u'A', u'84541'),
+    section(u'3510', u'A', u'83096'),
+    section(u'8803', u'3D', u'89839'),
+    section(u'8803', u'ACN', u'90293'),
+    section(u'9000', u'V05', u'86008'),
+    section(u'9000', u'Z01', u'80283'),
+  ]
+
+def test_get_sections():
+  scraper = create_scraper()
+  html = read('bwckschd.p_get_crse_unsec.html')
+  sections = scraper.scrape_sections_html(html)
+  assert_list_equal(sections, sections_expected())

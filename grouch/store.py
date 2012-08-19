@@ -5,6 +5,7 @@ import pickle
 import string
 
 from context import Context
+from model import Subject
 from scraper import Scraper
 from util import character_whitelist, makedirs
 
@@ -111,6 +112,12 @@ class Store:
     if subjects is not None:
       return subjects.find(s)
 
+  def __subject_id(self, s, term = None):
+    if not isinstance(s, Subject):
+      s = self.find_subject(s, term)
+    if s is not None:
+      return s.get_id()
+
   def get_courses(self, subject, term = None):
 
     courses = self.__get_courses(subject, term)
@@ -125,7 +132,10 @@ class Store:
     if term_id is None:
       return None
 
-    subject_id = subject.get_id()
+    subject_id = self.__subject_id(subject)
+
+    if subject_id is None:
+      return None
 
     def scrape():
       source = self.get_scraper().get_courses(
@@ -142,17 +152,46 @@ class Store:
       shelf_life = timedelta(hours = 6),
       alternative = scrape)
 
-  def get_sections(self, subject, term = None):
+  def get_sections(self, course, term = None):
+
+    return list([
+      {
+        'name': section['name'],
+        'crn': section['crn'],
+      }
+      for section in self.__get_sections(
+        subject = course.get_subject(),
+        term = term,
+      ).source
+      if section['course'] == course.get_number()
+    ])
+
+  def __get_sections(self, subject, term = None):
 
     term_id = self.__get_term_id(term)
 
     if term_id is None:
       return None
 
-    return self.get_scraper().get_sections(
-      subject_id = subject.get_id(),
-      term_id = term_id,
-    )
+    subject_id = self.__subject_id(subject)
+
+    if subject_id is None:
+      return None
+
+    def scrape():
+      source = self.get_scraper().get_sections(
+        subject_id = subject_id,
+        term_id = term_id,
+      )
+      if source is not None:
+        return Sections(source)
+
+    journal = self.__journal.child('terms', term_id,
+      'subject', subject_id, 'sections')
+
+    return journal.get(Sections,
+      shelf_life = timedelta(hours = 6),
+      alternative = scrape)
 
 _timestamp_format = '%Y-%m-%d-%H-%M-%S-%f'
 
@@ -213,6 +252,18 @@ class Courses:
   @staticmethod
   def load(fp):
     return Courses(pickle.load(fp))
+
+class Sections:
+
+  def __init__(self, source):
+    self.source = source
+
+  def dump(self, fp):
+    pickle.dump(self.source, fp)
+
+  @staticmethod
+  def load(fp):
+    return Sections(pickle.load(fp))
 
 def _safe_str(x):
   return character_whitelist(

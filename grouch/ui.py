@@ -4,7 +4,7 @@ import sys
 from textwrap import TextWrapper
 
 from context import Context
-from model import Term
+from model import Course, Term
 from scraper import Scraper
 from store import Store
 
@@ -98,10 +98,29 @@ def sections(args, store):
   if args.subject is None:
     err('--subject is required')
   else:
-    print(store.get_sections(
+    courses = store.get_courses(
       term = args.term,
       subject = args.subject,
-    ))
+    )
+    pad = 2
+    wrapper = TextWrapper(
+      initial_indent = ' ' * pad,
+      subsequent_indent = ' ' * (4 + pad),
+    )
+    for course in courses:
+      course = Course(args.subject, course['number'])
+      sections = store.get_sections(
+        course = course,
+        term = args.term,
+      )
+      if len(sections) != 0:
+        print(course.get_number() + '\n'.join(
+          wrapper.wrap(' '.join([
+            section['name'] for section in sections
+          ]))
+        ))
+        print ''
+
 
 def main():
 
