@@ -9,10 +9,7 @@ def read(name):
   return open(file_path(name)).read()
 
 def create_scraper():
-  return Scraper(
-    context = Context(),
-    enable_http = False,
-  )
+  return Scraper(enable_http = False)
 
 # Terms
 
