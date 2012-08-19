@@ -8,6 +8,7 @@ from urllib import urlencode
 from urllib2 import Request, OpenerDirector, \
   HTTPDefaultErrorHandler, HTTPSHandler
 
+from context import Context
 from model import Subject, Term
 from util import grouper
 
