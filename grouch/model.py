@@ -32,13 +32,17 @@ class Term:
     self.__year = year
 
   def __unicode__(self):
-    return '%s %d' % (_names[self.__season - 1].title(), self.__year)
+    return '%s %d' % (
+      _names[self.__season - 1].title(),
+      self.__year
+    )
 
   def __str__(self):
     return unicode(self).encode('utf-8')
 
   def __repr__(self):
-    return '<Term season=%d year=%d>' % (self.__season, self.__year)
+    return '<Term season=%d year=%d>' % \
+      (self.__season, self.__year)
 
   def __key(self):
     return (self.__year, self.__season)
@@ -68,10 +72,45 @@ class Subject:
     return unicode(self).encode('utf-8')
 
   def __repr__(self):
-    return '<Subject id="%s" name="%s">' % (self.__id, self.__name)
+    return '<Subject id="%s" name="%s">' % \
+      (self.__id, self.__name)
 
   def __key(self):
     return (self.__id, self.__name)
+
+  def __cmp__(self, other):
+    return cmp(self.__key(), other.__key())
+
+  def __hash__(self):
+    return hash(self.__key())
+
+class Course:
+
+  def __init__(self, subject_id, number):
+    self.__subject_id = subject_id
+    self.__number = number
+
+  def get_subject_id(self):
+    return self.__subject_id
+
+  def get_number(self):
+    return self.__number
+
+  def __unicode__(self):
+    return '%s %s' % (
+      self.__subject_id,
+      self.__number
+    )
+
+  def __str__(self):
+    return unicode(self).encode('utf-8')
+
+  def __repr__(self):
+    return '<Course id="%s" name="%s">' % \
+      (self.__subject_id, self.__number)
+
+  def __key(self):
+    return (self.__subject_id, self.__number)
 
   def __cmp__(self, other):
     return cmp(self.__key(), other.__key())
