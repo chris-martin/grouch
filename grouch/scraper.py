@@ -21,7 +21,11 @@ course_number_re_fragment = '[0-9]{4}'
 
 class Scraper:
 
-  def __init__(self, context, enable_http = True):
+  def __init__(self, context = None, enable_http = True):
+
+    if context is None:
+      context = Context()
+
     self.__context = context
     self.__enable_http = enable_http
 
