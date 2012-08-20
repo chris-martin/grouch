@@ -32,7 +32,7 @@ class Term:
     self.__year = year
 
   def __unicode__(self):
-    return '%s %d' % (
+    return u'%s %d' % (
       _season_names[self.__season - 1].title(),
       self.__year
     )
@@ -41,7 +41,7 @@ class Term:
     return unicode(self).encode('utf-8')
 
   def __repr__(self):
-    return '<Term season=%d year=%d>' % \
+    return u'<Term season=%d year=%d>' % \
       (self.__season, self.__year)
 
   def __key(self):
@@ -66,13 +66,13 @@ class Subject:
     return self.__name
 
   def __unicode__(self):
-    return '%s %s' % (self.__id, self.__name)
+    return u'%s %s' % (self.__id, self.__name)
 
   def __str__(self):
     return unicode(self).encode('utf-8')
 
   def __repr__(self):
-    return '<Subject id="%s" name="%s">' % \
+    return u'<Subject id="%s" name="%s">' % \
       (self.__id, self.__name)
 
   def __key(self):
@@ -107,7 +107,7 @@ class Course:
     return self.__number
 
   def __unicode__(self):
-    return '%s %s' % (
+    return u'%s %s' % (
       self.__subject,
       self.__number
     )
@@ -116,7 +116,7 @@ class Course:
     return unicode(self).encode('utf-8')
 
   def __repr__(self):
-    return '<Course subject="%s" number="%s">' % \
+    return u'<Course subject="%s" number="%s">' % \
       (self.__subject, self.__number)
 
   def __key(self):
@@ -127,3 +127,35 @@ class Course:
 
   def __hash__(self):
     return hash(self.__key())
+
+class Capacity:
+
+  def __init__(self, max, current):
+    self.__max = max
+    self.__current = current
+
+  def get_max():
+    return self.__max
+
+  def get_current():
+    return self.__current
+
+  def __unicode__(self):
+    return u'%d of %d slots filled' % (
+      self.__current,
+      self.__max
+    )
+
+  def __str__(self):
+    return unicode(self).encode('utf-8')
+
+  def __repr__(self):
+    return u'<Capacity max="%d" current="%d">' % \
+      (self.__max, self.__current)
+
+  def __key(self):
+    return (self.__max, self.__current)
+
+  def __cmp__(self, other):
+    return cmp(self.__key(), other.__key())
+

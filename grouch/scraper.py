@@ -11,16 +11,20 @@ from urllib2 import Request, OpenerDirector, \
   HTTPDefaultErrorHandler, HTTPSHandler
 
 from context import Context
-from model import Subject, Term
+from model import Capacity, Course, Subject, Term
 from util import character_whitelist, grouper, makedirs
 
 def oscar_url(procedure):
   return 'https://oscar.gatech.edu/pls/bprod/%s' % procedure
 
-# Use this regex to identify a course number.
+# Regex for a course number.
 # Some lists contain pseudo-courses such as "3XXX".
 # We have no use for those, and this will not match them.
 course_number_re_fragment = '[0-9]{4}'
+
+# Regex for a section name.
+# Some examples of section names: "A", "B2", "MAS", "3D".
+section_name_re_fragment = '[A-Za-z0-9]+'
 
 def _safe_str(x):
   return character_whitelist(
@@ -234,13 +238,13 @@ class Scraper:
     def join(x): return map(lambda y: ''.join(y), x)
     rows = join(grouper(2, re.split('(<TR)', html)[1:]))
 
-    title_re = re.compile('.*CLASS="nttitle".*>[A-Z]+ ('
-      + course_number_re_fragment + ') - (.*)</A></TD>.*')
+    title_re = re.compile('CLASS="nttitle".*>[A-Z]+ ('
+      + course_number_re_fragment + ') - (.*)</A></TD>')
 
     def iter_courses():
       for (row1, row2) in grouper(2, rows):
         course = {}
-        match = title_re.match(row1.replace('\n', ''))
+        match = title_re.search(row1.replace('\n', ''))
         if match is None: continue
         course['number'] = match.group(1)
         course['name'] = match.group(2)
@@ -358,14 +362,14 @@ class Scraper:
     rows = join(grouper(2, re.split(
       '(<TR>\n<TH CLASS="ddtitle")', html)[1:]))
 
-    title_re = re.compile('.*<TH CLASS="ddtitle".*><A .*>'
+    title_re = re.compile('<TH CLASS="ddtitle".*><A .*>'
       '.* - ([0-9]+) - .* (' + course_number_re_fragment + ')'
-      ' - ([A-Za-z0-9]+)</A></TH>')
+      ' - (' + section_name_re_fragment + ')</A></TH>')
 
     def iter_sections():
       for row in rows:
         section = {}
-        match = title_re.match(row.replace('\n', ''))
+        match = title_re.search(row.replace('\n', ''))
         if match is None: continue
         yield {
           'crn': match.group(1),
@@ -374,3 +378,69 @@ class Scraper:
         }
 
     return list(iter_sections())
+
+  #
+  # Section
+  # -------------------------------------------------------------
+  #
+  # A dict in the form {
+  #   'course': Course('CS', '8803'),
+  #   'section': 'ACN',
+  #   'name': 'Algorithms for Complex Netwks',
+  #   'capacity': Capacity(20, 9),
+  # }
+  #
+
+  def get_section(self, term_id, crn):
+    html = self.fetch_section_html(term_id, crn)
+    if html is not None:
+      return self.scrape_section_html(html)
+
+  def fetch_section_html(self, term_id, crn):
+    return self.fetch_body(
+      request = Request('%s?%s' % (
+        oscar_url('bwckschd.p_disp_detail_sched'),
+        urlencode([
+          ('term_in', term_id),
+          ('crn_in', crn),
+        ]),
+      )),
+      summary = 'fetch-section-html',
+    )
+
+  def scrape_section_html(self, html):
+
+    section = {}
+
+    soup = BeautifulSoup(html)
+
+    header = soup.find('th', 'ddlabel')
+    if header is None:
+      return None
+    match = re.match('(.*) - [0-9]+ - (.*) (' + course_number_re_fragment + ')'
+      ' - (' + section_name_re_fragment + ')$', header.text.strip())
+    if match is None:
+      return None
+    section['name'] = match.group(1)
+    section['course'] = Course(
+      subject = match.group(2),
+      number = match.group(3),
+    )
+    section['section'] = match.group(4)
+
+    tables = soup.findAll('table', 'datadisplaytable')
+    if len(tables) >= 2:
+      table = tables[1]
+      trs = table.findAll('tr')
+      if len(trs) >= 2:
+        tr = trs[1]
+        tds = tr.findAll('td')
+        if len(tds) > 2:
+          try:
+            section['capacity'] = Capacity(
+              max = int(tds[0].text),
+              current = int(tds[1].text),
+            )
+          except ValueError: pass
+
+    return section

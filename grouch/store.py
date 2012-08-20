@@ -210,6 +210,34 @@ class Store:
     if len(matches) == 1:
       return matches[0]
 
+  def get_section(self, crn, term = None):
+
+    section = self.__get_section(crn, term)
+
+    if section is not None:
+      return section.source
+
+  def __get_section(self, crn, term = None):
+
+    term_id = self.__get_term_id(term)
+
+    if term_id is None:
+      return None
+
+    def scrape():
+      source = self.get_scraper().get_section(
+        crn = crn,
+        term_id = term_id,
+      )
+      if source is not None:
+        return Section(source)
+
+    journal = self.__journal.child('terms', term_id, 'crn', crn)
+
+    return journal.get(Section,
+      shelf_life = timedelta(minutes = 10),
+      alternative = scrape)
+
 _timestamp_format = '%Y-%m-%d-%H-%M-%S-%f'
 
 class Terms:
@@ -281,6 +309,18 @@ class Sections:
   @staticmethod
   def load(fp):
     return Sections(pickle.load(fp))
+
+class Section:
+
+  def __init__(self, source):
+    self.source = source
+
+  def dump(self, fp):
+    pickle.dump(self.source, fp)
+
+  @staticmethod
+  def load(fp):
+    return Section(pickle.load(fp))
 
 def _safe_str(x):
   return character_whitelist(

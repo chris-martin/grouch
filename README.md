@@ -69,6 +69,14 @@ $ crn --subject cs --number 2110 --section A2
 87134
 ```
 
+```
+$ python grouch/ui.py section --course cs2050 --section A1
+
+CS 2050 - Intro Discrete Math CS
+
+Section A1: 49 of 50 slots filled
+```
+
 Installation
 ------------
 

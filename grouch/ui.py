@@ -75,6 +75,8 @@ def courses(args, store):
   if args.subject is None:
     err('--subject is required')
   else:
+    if args.chatty:
+      print('Subject: %s\n' % unicode(args.subject))
     courses = store.get_courses(
       term = args.term,
       subject = args.subject,
@@ -144,11 +146,16 @@ def sections_by_subject(args, store):
       ))
       print ''
 
-# @command()
-# def section(args, store):
-#   crn = get_crn(args, store)
-#   section = store.get_section(crn)
-#   print(repr(section))
+@command()
+def section(args, store):
+  crn = get_crn(args, store)
+  section = store.get_section(crn)
+  print('%s - %s\n\nSection %s: %s' %(
+    section['course'],
+    section['name'],
+    section['section'],
+    section['capacity'],
+  ))
 
 @command()
 def crn(args, store):
@@ -292,8 +299,6 @@ def main():
 
   if args.subject is not None:
     subject = store.find_subject(args.subject)
-    if args.chatty:
-      print('Subject: %s\n' % unicode(subject))
     args.subject = subject
 
   if args.command:

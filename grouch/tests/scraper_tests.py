@@ -1,6 +1,6 @@
 from nose.tools import *
 
-from grouch import Context, Scraper, Subject, Term
+from grouch import *
 
 def file_path(name):
   return 'grouch/tests/%s' % name
@@ -114,3 +114,19 @@ def test_get_sections():
   html = read('bwckschd.p_get_crse_unsec.html')
   sections = scraper.scrape_sections_html(html)
   assert_list_equal(sections, sections_expected())
+
+# section
+
+def section_expected():
+  return {
+    'course': Course(u'CS', u'8803'),
+    'section': u'ACN',
+    'name': u'Special Topics',
+    'capacity': Capacity(20, 9),
+  }
+
+def test_section():
+  scraper = create_scraper()
+  html = read('bwckschd.p_disp_detail_sched.html')
+  section = scraper.scrape_section_html(html)
+  assert_dict_equal(section, section_expected())
