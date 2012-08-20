@@ -60,17 +60,26 @@ Subject: PHYS Physics
 ```
 
 ```
+$ grouch sections --course cs2050
+
+A1  88601
+A2  88602
+B1  88603
+B2  88604
+```
+
+```
 $ grouch crn --course cs2110 --section A2
 
 87134
 
-$ crn --subject cs --number 2110 --section A2
+$ grouch crn --subject cs --number 2110 --section A2
 
 87134
 ```
 
 ```
-$ python grouch/ui.py section --course cs2050 --section A1
+$ grouch section --course cs2050 --section A1
 
 CS 2050 - Intro Discrete Math CS
 
