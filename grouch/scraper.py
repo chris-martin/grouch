@@ -174,7 +174,7 @@ class Scraper:
 
     def use_html():
       html = self.fetch_courses_html(term_id, subject_id)
-      return self.scrape_courses_xml(html)
+      return self.scrape_courses_html(html)
 
     def use_xml():
       xml = self.fetch_courses_xml(term_id, subject_id)
