@@ -12,18 +12,20 @@ from util import character_whitelist, makedirs
 class Store:
 
   def __init__(self, context = None, enable_http = True,
-      force_refresh = False):
+      log_http = False, force_refresh = False):
 
     if context is None:
       context = Context()
 
     self.__context = context
     self.__enable_http = enable_http
+    self.__log_http = log_http
     self.__private_scrapers = {}
 
     self.__public_scraper = Scraper(
       context = context,
       enable_http = enable_http,
+      log_http = log_http,
     )
 
     self.__journal = Journal(
@@ -35,6 +37,7 @@ class Store:
     self.__private_scrapers[username] = Scraper(
       context = self.__context,
       enable_http = self.__enable_http,
+      log_http = self.__log_http,
       username = username,
       password = password,
     )

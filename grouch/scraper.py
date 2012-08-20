@@ -1,8 +1,10 @@
 from BeautifulSoup import BeautifulSoup, BeautifulStoneSoup
-from datetime import timedelta
+from datetime import datetime, timedelta
 from html2text import unescape
 from operator import itemgetter
+import os.path
 import re
+import string
 import time
 from urllib import urlencode
 from urllib2 import Request, OpenerDirector, \
@@ -10,7 +12,7 @@ from urllib2 import Request, OpenerDirector, \
 
 from context import Context
 from model import Subject, Term
-from util import grouper
+from util import character_whitelist, grouper, makedirs
 
 def oscar_url(procedure):
   return 'https://oscar.gatech.edu/pls/bprod/%s' % procedure
@@ -20,17 +22,25 @@ def oscar_url(procedure):
 # We have no use for those, and this will not match them.
 course_number_re_fragment = '[0-9]{4}'
 
+def _safe_str(x):
+  return character_whitelist(
+    str(x),
+    string.ascii_letters + string.digits + '_-'
+  )
+
 class Scraper:
 
-  def __init__(self, context = None, enable_http = True):
+  def __init__(self, context = None, enable_http = True,
+      log_http = False):
 
     if context is None:
       context = Context()
 
     self.__context = context
     self.__enable_http = enable_http
+    self.__log_http = log_http
 
-  def fetch(self, request, opener = None):
+  def fetch(self, request, opener = None, summary = None):
 
     if not self.__enable_http:
       return (None, None)
@@ -46,6 +56,22 @@ class Scraper:
     t = timedelta(seconds = time.clock() - t)
     url = request.get_full_url()
     self.__context.get_logger().info('HTTP time: %s\n%s' % (t, url))
+
+    if self.__log_http:
+      log_dir = os.path.join(self.__context.get_config_dir(), 'http-log')
+      makedirs(log_dir)
+      log_file = os.path.join(log_dir,
+        datetime.utcnow().strftime('%Y-%m-%d-%H-%M-%S-%f'))
+      if summary is not None:
+        log_file += '-' + _safe_str(summary)
+      fp = open(log_file, 'w')
+      fp.write('\n\n'.join([
+        request.get_full_url(),
+        request.get_data() or 'No request data',
+        body or 'No response body',
+      ]))
+      fp.close()
+
     return (response, body)
 
   def fetch_body(self, *args, **kwargs):
@@ -67,7 +93,10 @@ class Scraper:
 
   def fetch_terms_html(self):
     url = oscar_url('bwckschd.p_disp_dyn_sched')
-    return self.fetch_body(Request(url))
+    return self.fetch_body(
+      request = Request(url),
+      summary = 'fetch-terms-html',
+    )
 
   def scrape_terms_html(self, html):
 
@@ -96,13 +125,16 @@ class Scraper:
       return self.scrape_subjects_html(html)
 
   def fetch_subjects_html(self, term_id):
-    return self.fetch_body(Request(
-      url = oscar_url('bwckgens.p_proc_term_date'),
-      data = urlencode([
-        ('p_calling_proc', 'bwckschd.p_disp_dyn_sched'),
-        ('p_term', str(term_id)),
-      ]),
-    ))
+    return self.fetch_body(
+      request = Request(
+        url = oscar_url('bwckgens.p_proc_term_date'),
+        data = urlencode([
+          ('p_calling_proc', 'bwckschd.p_disp_dyn_sched'),
+          ('p_term', str(term_id)),
+        ]),
+      ),
+      summary = 'fetch-subjects-html',
+    )
 
   def scrape_subjects_html(self, html):
 
@@ -159,31 +191,34 @@ class Scraper:
           'get_courses (%s) failed' % method)
 
   def fetch_courses_html(self, term_id, subject_id):
-    return self.fetch_body(Request(
-      url = oscar_url('bwckctlg.p_display_courses'),
-      data = urlencode([
-        ('term_in', term_id),
-        ('sel_subj', 'dummy'),
-        ('sel_levl', 'dummy'),
-        ('sel_schd', 'dummy'),
-        ('sel_coll', 'dummy'),
-        ('sel_divs', 'dummy'),
-        ('sel_dept', 'dummy'),
-        ('sel_attr', 'dummy'),
-        ('sel_subj', subject_id),
-        ('sel_crse_strt', ''),
-        ('sel_crse_end', ''),
-        ('sel_title', ''),
-        ('sel_levl', '%'),
-        ('sel_schd', '%'),
-        ('sel_coll', '%'),
-        ('sel_divs', '%'),
-        ('sel_dept', '%'),
-        ('sel_from_cred', ''),
-        ('sel_to_cred', ''),
-        ('sel_attr', '%'),
-      ]),
-    ))
+    return self.fetch_body(
+      request = Request(
+        url = oscar_url('bwckctlg.p_display_courses'),
+        data = urlencode([
+          ('term_in', term_id),
+          ('sel_subj', 'dummy'),
+          ('sel_levl', 'dummy'),
+          ('sel_schd', 'dummy'),
+          ('sel_coll', 'dummy'),
+          ('sel_divs', 'dummy'),
+          ('sel_dept', 'dummy'),
+          ('sel_attr', 'dummy'),
+          ('sel_subj', subject_id),
+          ('sel_crse_strt', ''),
+          ('sel_crse_end', ''),
+          ('sel_title', ''),
+          ('sel_levl', '%'),
+          ('sel_schd', '%'),
+          ('sel_coll', '%'),
+          ('sel_divs', '%'),
+          ('sel_dept', '%'),
+          ('sel_from_cred', ''),
+          ('sel_to_cred', ''),
+          ('sel_attr', '%'),
+        ]),
+      ),
+      summary = 'fetch-courses-html',
+    )
 
   def scrape_courses_html(self, html):
 
@@ -218,25 +253,28 @@ class Scraper:
     return list(iter_courses())
 
   def fetch_courses_xml(self, term_id, subject_id):
-    return self.fetch_body(Request(
-      url = oscar_url('bwckctlg.xml'),
-      data = urlencode([
-        ('term_in', term_id),
-        ('subj_in', '\t%s\t' % subject_id),
-        ('title_in', '%%'),
-        ('divs_in', '%'),
-        ('dept_in', '%'),
-        ('coll_in', '%'),
-        ('schd_in', '%'),
-        ('levl_in', '%'),
-        ('attr_in', '%'),
-        ('crse_strt_in', ''),
-        ('crse_end_in', ''),
-        ('cred_from_in', ''),
-        ('cred_to_in', ''),
-        ('last_updated', ''),
-      ]),
-    ))
+    return self.fetch_body(
+      request = Request(
+        url = oscar_url('bwckctlg.xml'),
+        data = urlencode([
+          ('term_in', term_id),
+          ('subj_in', '\t%s\t' % subject_id),
+          ('title_in', '%%'),
+          ('divs_in', '%'),
+          ('dept_in', '%'),
+          ('coll_in', '%'),
+          ('schd_in', '%'),
+          ('levl_in', '%'),
+          ('attr_in', '%'),
+          ('crse_strt_in', ''),
+          ('crse_end_in', ''),
+          ('cred_from_in', ''),
+          ('cred_to_in', ''),
+          ('last_updated', ''),
+        ]),
+      ),
+      summary = 'fetch-courses-xml',
+    )
 
   def scrape_courses_xml(self, xml):
 
@@ -278,38 +316,41 @@ class Scraper:
       return self.scrape_sections_html(html)
 
   def fetch_sections_html(self, term_id, subject_id):
-    return self.fetch_body(Request(
-      url = oscar_url('bwckschd.p_get_crse_unsec'),
-      data = urlencode([
-        ('term_in', term_id),
-        ('sel_subj', 'dummy'),
-        ('sel_day', 'dummy'),
-        ('sel_schd', 'dummy'),
-        ('sel_insm', 'dummy'),
-        ('sel_camp', 'dummy'),
-        ('sel_levl', 'dummy'),
-        ('sel_sess', 'dummy'),
-        ('sel_instr', 'dummy'),
-        ('sel_ptrm', 'dummy'),
-        ('sel_attr', 'dummy'),
-        ('sel_subj', subject_id),
-        ('sel_crse', ''),
-        ('sel_title', ''),
-        ('sel_schd', '%'),
-        ('sel_from_cred', ''),
-        ('sel_to_cred', ''),
-        ('sel_camp', '%'),
-        ('sel_ptrm', '%'),
-        ('sel_instr', '%'),
-        ('sel_attr', '%'),
-        ('begin_hh', '0'),
-        ('begin_mi', '0'),
-        ('begin_ap', 'a'),
-        ('end_hh', '0'),
-        ('end_mi', '0'),
-        ('end_ap', 'a'),
-      ]),
-    ))
+    return self.fetch_body(
+      request = Request(
+        url = oscar_url('bwckschd.p_get_crse_unsec'),
+        data = urlencode([
+          ('term_in', term_id),
+          ('sel_subj', 'dummy'),
+          ('sel_day', 'dummy'),
+          ('sel_schd', 'dummy'),
+          ('sel_insm', 'dummy'),
+          ('sel_camp', 'dummy'),
+          ('sel_levl', 'dummy'),
+          ('sel_sess', 'dummy'),
+          ('sel_instr', 'dummy'),
+          ('sel_ptrm', 'dummy'),
+          ('sel_attr', 'dummy'),
+          ('sel_subj', subject_id),
+          ('sel_crse', ''),
+          ('sel_title', ''),
+          ('sel_schd', '%'),
+          ('sel_from_cred', ''),
+          ('sel_to_cred', ''),
+          ('sel_camp', '%'),
+          ('sel_ptrm', '%'),
+          ('sel_instr', '%'),
+          ('sel_attr', '%'),
+          ('begin_hh', '0'),
+          ('begin_mi', '0'),
+          ('begin_ap', 'a'),
+          ('end_hh', '0'),
+          ('end_mi', '0'),
+          ('end_ap', 'a'),
+        ]),
+      ),
+      summary = 'fetch-sections-html',
+    )
 
   def scrape_sections_html(self, html):
 

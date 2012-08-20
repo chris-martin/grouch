@@ -175,7 +175,15 @@ def main():
     dest = 'chatty',
     action = 'store_false',
     help = 'Do not print anything beyond the output '
-      'requested by the command'
+      'requested by the command',
+  )
+
+  parser.add_argument(
+    '--log-http',
+    dest = 'log_http',
+    action = 'store_true',
+    help = 'Log HTTP requests and responses to disk '
+      '(warning: this could include authentication credentials)',
   )
 
   args = parser.parse_args()
@@ -191,6 +199,7 @@ def main():
   store = Store(
     context = context,
     enable_http = args.enable_http,
+    log_http = args.log_http,
     force_refresh = args.refresh,
   )
 

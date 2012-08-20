@@ -89,3 +89,6 @@ Logging
 HTTP and filesystem activity is logged to ```~/.config/grouch/log```.
 Use the ```--verbose``` flag to also log to the console.
 
+For debugging, you can use the ```--log-http``` flag to log all
+HTTP requests and responses to ```~/.config/grouch/log-http/```.
+
