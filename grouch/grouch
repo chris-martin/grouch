@@ -1,3 +1,0 @@
-#!python
-import grouch
-grouch.ui.main()
