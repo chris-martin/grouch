@@ -59,6 +59,16 @@ Subject: PHYS Physics
       P04 P05 P06 P07 P08 Q Q01 Q02 Q03 Q04 Q05 Q07 Q08
 ```
 
+```
+$ grouch crn --course cs2110 --section A2
+
+87134
+
+$ crn --subject cs --number 2110 --section A2
+
+87134
+```
+
 Installation
 ------------
 

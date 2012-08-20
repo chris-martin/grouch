@@ -26,6 +26,12 @@ def term_type(value):
     raise argparse.ArgumentTypeError('invalid format')
   return term
 
+def course_type(value):
+  course = Course.parse(value)
+  if course is None:
+    raise argparse.ArgumentTypeError('invalid format')
+  return course
+
 commands = {}
 
 def command():
@@ -95,32 +101,87 @@ def courses(args, store):
 
 @command()
 def sections(args, store):
-  if args.subject is None:
-    err('--subject is required')
-  else:
-    courses = store.get_courses(
-      term = args.term,
-      subject = args.subject,
-    )
-    pad = 2
-    wrapper = TextWrapper(
-      initial_indent = ' ' * pad,
-      subsequent_indent = ' ' * (4 + pad),
-    )
-    for course in courses:
-      course = Course(args.subject, course['number'])
-      sections = store.get_sections(
-        course = course,
-        term = args.term,
-      )
-      if len(sections) != 0:
-        print(course.get_number() + '\n'.join(
-          wrapper.wrap(' '.join([
-            section['name'] for section in sections
-          ]))
-        ))
-        print ''
+  course = get_course(args)
+  if course is not None:
+    sections_by_course(args, store, course)
+  elif args.subject is not None:
+    sections_by_subject(args, store)
 
+def sections_by_course(args, store, course):
+
+  sections = store.get_sections(
+    course = course,
+    term = args.term
+  )
+
+  for section in sections:
+    print '%s\t%s' % (section['name'], section['crn'])
+
+def sections_by_subject(args, store):
+
+  courses = store.get_courses(
+    term = args.term,
+    subject = args.subject,
+  )
+
+  pad = 2
+  wrapper = TextWrapper(
+    initial_indent = ' ' * pad,
+    subsequent_indent = ' ' * (4 + pad),
+  )
+
+  for course in courses:
+    course = Course(args.subject, course['number'])
+    sections = store.get_sections(
+      course = course,
+      term = args.term,
+    )
+    if len(sections) != 0:
+      print(course.get_number() + '\n'.join(
+        wrapper.wrap(' '.join([
+          section['name'] for section in sections
+        ]))
+      ))
+      print ''
+
+# @command()
+# def section(args, store):
+#   crn = get_crn(args, store)
+#   section = store.get_section(crn)
+#   print(repr(section))
+
+@command()
+def crn(args, store):
+  crn = get_crn(args, store)
+  if crn:
+    print(crn)
+
+def get_crn(args, store):
+
+  if args.crn:
+    return args.crn
+
+  course = get_course(args)
+
+  if course is None:
+    return None
+
+  if args.section is None:
+    return None
+
+  return store.get_crn(
+    course = course,
+    section = args.section,
+    term = args.term,
+  )
+
+def get_course(args):
+
+  if args.course:
+    return args.course
+
+  if args.subject and args.number:
+    return Course(args.subject, args.number)
 
 def main():
 
@@ -139,14 +200,40 @@ def main():
   parser.add_argument(
     '--term',
     type = term_type,
-    help = 'A semester and year such as "summer 2007"' \
+    help = 'Semester and year such as "summer 2007"' \
       ' (defaults to the latest term)',
     metavar = '',
   )
 
   parser.add_argument(
     '--subject',
-    help = 'A subject such as "cs" or "comp sci"',
+    help = 'Subject such as "cs" or "comp sci"',
+    metavar = '',
+  )
+
+  parser.add_argument(
+    '--number',
+    help = 'Course number such as "1101" or "8803"',
+    metavar = '',
+  )
+
+  parser.add_argument(
+    '--course',
+    type = course_type,
+    help = 'Course such as "CS2110" or "psych 1101" '
+      '(equivalent to --subject and --number)',
+    metavar = '',
+  )
+
+  parser.add_argument(
+    '--section',
+    help = 'Section name such as "A" or "B"',
+    metavar = '',
+  )
+
+  parser.add_argument(
+    '--crn',
+    help = 'CRN (number that identifies a section)',
     metavar = '',
   )
 

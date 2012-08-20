@@ -1,8 +1,8 @@
 import re
 
-_names = [u'spring', u'summer', u'fall']
+_season_names = [u'spring', u'summer', u'fall']
 
-_pattern = re.compile('^([a-z]+)[ ]*([0-9]{4})$')
+_term_pattern = re.compile('^([a-z]+)[ ]*([0-9]{4})$')
 
 class Term:
 
@@ -12,11 +12,11 @@ class Term:
 
   @staticmethod
   def parse(s):
-    m = re.match(_pattern, s.strip().lower())
+    m = re.match(_term_pattern, s.strip().lower())
     if m:
       season = m.group(1)
-      if season in _names:
-        season = 1 + _names.index(season)
+      if season in _season_names:
+        season = 1 + _season_names.index(season)
         year = int(m.group(2))
         return Term(season, year)
 
@@ -27,13 +27,13 @@ class Term:
     return self.__year
 
   def __init__(self, season, year):
-    assert season in range(1, len(_names) + 1)
+    assert season in range(1, len(_season_names) + 1)
     self.__season = season
     self.__year = year
 
   def __unicode__(self):
     return '%s %d' % (
-      _names[self.__season - 1].title(),
+      _season_names[self.__season - 1].title(),
       self.__year
     )
 
@@ -84,21 +84,31 @@ class Subject:
   def __hash__(self):
     return hash(self.__key())
 
+_course_pattern = re.compile('^([A-Z ]+)([0-9]{4})$')
+
 class Course:
 
-  def __init__(self, subject_id, number):
-    self.__subject_id = subject_id
+  @staticmethod
+  def parse(s):
+    m = re.match(_course_pattern, s.strip().upper())
+    if m:
+      subject = m.group(1)
+      number = m.group(2)
+      return Course(subject, number)
+
+  def __init__(self, subject, number):
+    self.__subject = subject
     self.__number = number
 
   def get_subject(self):
-    return self.__subject_id
+    return self.__subject
 
   def get_number(self):
     return self.__number
 
   def __unicode__(self):
     return '%s %s' % (
-      self.__subject_id,
+      self.__subject,
       self.__number
     )
 
@@ -106,11 +116,11 @@ class Course:
     return unicode(self).encode('utf-8')
 
   def __repr__(self):
-    return '<Course id="%s" name="%s">' % \
-      (self.__subject_id, self.__number)
+    return '<Course subject="%s" number="%s">' % \
+      (self.__subject, self.__number)
 
   def __key(self):
-    return (self.__subject_id, self.__number)
+    return (self.__subject, self.__number)
 
   def __cmp__(self, other):
     return cmp(self.__key(), other.__key())

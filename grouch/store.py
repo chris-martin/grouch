@@ -196,6 +196,20 @@ class Store:
       shelf_life = timedelta(hours = 6),
       alternative = scrape)
 
+  def get_crn(self, course, section, term = None):
+
+    term_id = self.__get_term_id(term)
+
+    if term_id is None:
+      return None
+
+    sections = self.get_sections(course, term)
+    matches = list([ s['crn'] for s in sections
+      if s['name'].upper() == section.upper() ])
+
+    if len(matches) == 1:
+      return matches[0]
+
 _timestamp_format = '%Y-%m-%d-%H-%M-%S-%f'
 
 class Terms:
