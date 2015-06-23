@@ -49,10 +49,10 @@ class Store:
         else:
             return self.__public_scraper
 
-    #
-    # A list of Terms, sorted by chronology in reverse.
-    #
     def get_terms(self):
+        """
+        :return: A list of Terms, sorted by chronology in reverse.
+        """
 
         terms = self.__get_terms()
 
@@ -80,10 +80,10 @@ class Store:
             term = terms.list[0]
         return terms.dict[term]
 
-    #
-    # A list of Subjects, sorted by name.
-    #
     def get_subjects(self, term=None):
+        """
+        :return: A list of Subjects, sorted by name.
+        """
 
         subjects = self.__get_subjects(term)
 
@@ -445,10 +445,11 @@ class Journal:
         self.__know(None)
 
 
-#
-# Memoizes a value function.
-#
 class Memo:
+    """
+    Memoizes a value function.
+    """
+
     def __init__(self, fn):
         self.__fn = fn
         self.__value = None

@@ -85,15 +85,14 @@ class Scraper:
         (response, body) = self.fetch(*args, **kwargs)
         return body
 
-    #
     # Terms
     # -------------------------------------------------------------
-    #
-    # A list of tuples in the form
-    # ( Term(Term.FALL, 2012), u'201208' )
-    #
 
     def get_terms(self):
+        """
+        :return: A list of tuples in the form
+            ( Term(Term.FALL, 2012), u'201208' )
+        """
         html = self.fetch_terms_html()
         if html is not None:
             return self.scrape_terms_html(html)
@@ -119,14 +118,13 @@ class Scraper:
 
         return list(iter_options())
 
-    #
     # Subjects
     # -------------------------------------------------------------
-    #
-    # A list of Subject objects.
-    #
 
     def get_subjects(self, term_id):
+        """
+        :return: A list of Subject objects.
+        """
         html = self.fetch_subjects_html(term_id)
         if html is not None:
             return self.scrape_subjects_html(html)
@@ -158,23 +156,24 @@ class Scraper:
 
         return list(iter_options())
 
-    #
     # Courses
     # -------------------------------------------------------------
-    #
-    # A list of dicts in the form {
-    # 'number': u'1050',
-    # 'name': u'Constructing Proofs',
-    # 'description': u'Techniques of rigorous argumentation.'
-    # }
-    #
-    # This scrape has two methods: 'html', and 'xml' as a fallback.
-    # Defaults to html first because I have observed that the XML
-    # method, although easier to scrape, may contain less data.
-    # For example, the course description for CS 4911 is missing
-    # from the XML but present in the HTML.
-    #
+
     def get_courses(self, term_id=None, subject_id=None, methods=None):
+        """
+        This scrape has two methods: 'html', and 'xml' as a fallback.
+        Defaults to html first because I have observed that the XML
+        method, although easier to scrape, may contain less data.
+        For example, the course description for CS 4911 is missing
+        from the XML but present in the HTML.
+
+        :return: A list of dicts in the form
+            {
+                'number': u'1050',
+                'name': u'Constructing Proofs',
+                'description': u'Techniques of rigorous argumentation.'
+            }.
+        """
 
         if methods is None:
             methods = ['html', 'xml']
@@ -228,15 +227,16 @@ class Scraper:
         )
 
     def scrape_courses_html(self, html):
+        """
+        Don't try to parse HTML with regular expressions, right?
+        Unfortunately, since Oscar doesn't believe in closing <tr>
+        tags, BeautifulSoup does not parse this table intelligibly.
 
-        # Don't try to parse HTML with regular expressions, right?
-        # Unfortunately, since Oscar doesn't believe in closing <tr>
-        # tags, BeautifulSoup does not parse this table intelligibly.
-
-        # This page consists of one giant single-column table.
-        # Each course is represented by two consecutive rows.
-        # The first row contains the course number and title.
-        # The second row contains the description, plus some other things.
+        This page consists of one giant single-column table.
+        Each course is represented by two consecutive rows.
+        The first row contains the course number and title.
+        The second row contains the description, plus some other things.
+        """
 
         def join(x):
             return map(lambda y: ''.join(y), x)
@@ -310,18 +310,18 @@ class Scraper:
 
         return list(iter_courses())
 
-    #
     # Sections
     # -------------------------------------------------------------
-    #
-    # A list of dicts in the form {
-    # 'crn': '87134',
-    # 'course': '2110',
-    # 'name': 'A2',
-    # }
-    #
 
     def get_sections(self, term_id, subject_id):
+        """
+        :return: A list of dicts in the form
+            {
+                'crn': '87134',
+                'course': '2110',
+                'name': 'A2',
+            }
+        """
         html = self.fetch_sections_html(term_id, subject_id)
         if html is not None:
             return self.scrape_sections_html(html)
@@ -389,19 +389,19 @@ class Scraper:
 
         return list(iter_sections())
 
-    #
     # Section
     # -------------------------------------------------------------
-    #
-    # A dict in the form {
-    #   'course': Course('CS', '8803'),
-    #   'section': 'ACN',
-    #   'name': 'Algorithms for Complex Netwks',
-    #   'capacity': Capacity(20, 9),
-    # }
-    #
 
     def get_section(self, term_id, crn):
+        """
+        :return: A dict in the form
+            {
+                'course': Course('CS', '8803'),
+                'section': 'ACN',
+                'name': 'Algorithms for Complex Netwks',
+                'capacity': Capacity(20, 9),
+            }
+        """
         html = self.fetch_section_html(term_id, crn)
         if html is not None:
             return self.scrape_section_html(html)

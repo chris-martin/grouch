@@ -14,10 +14,12 @@ def character_whitelist(x, whitelist):
     ))
 
 
-#
-# Collect data into fixed-length chunks or blocks
-# grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx
-#
 def grouper(n, iterable, fillvalue=None):
+    """
+    Collects data into fixed-length chunks or blocks.
+
+        >>> grouper(3, 'ABCDEFG', 'x')
+        'ABC DEF Gxx'
+    """
     args = [iter(iterable)] * n
     return zip_longest(fillvalue=fillvalue, *args)
