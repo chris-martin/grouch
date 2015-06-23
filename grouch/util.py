@@ -1,4 +1,4 @@
-from itertools import izip_longest
+from itertools import zip_longest
 import os, os.path
 import string
 
@@ -17,4 +17,4 @@ def character_whitelist(x, whitelist):
 #
 def grouper(n, iterable, fillvalue = None):
   args = [ iter(iterable) ] * n
-  return izip_longest(fillvalue = fillvalue, *args)
+  return zip_longest(fillvalue = fillvalue, *args)
