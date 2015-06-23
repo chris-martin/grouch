@@ -2,7 +2,6 @@ import argparse
 import logging
 import sys
 from textwrap import TextWrapper
-#from bs4 import BeautifulSoup
 from context import Context
 from model import Course, Term
 from scraper import Scraper
@@ -98,7 +97,7 @@ def courses(args, store):
         d = course['description']
         if d is not None:
           for line in wrapper.wrap(d):
-            print (line)
+            print(line)
           print('')
 
 @command()
