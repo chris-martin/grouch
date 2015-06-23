@@ -116,7 +116,7 @@ def sections_by_course(args, store, course):
   )
 
   for section in sections:
-    print ('%s\t%s' % (section['name'], section['crn']))
+    print('%s\t%s' % (section['name'], section['crn']))
 
 def sections_by_subject(args, store):
 
@@ -143,7 +143,7 @@ def sections_by_subject(args, store):
           section['name'] for section in sections
         ]))
       ))
-      print ('')
+      print('')
 
 @command()
 def section(args, store):
@@ -284,7 +284,7 @@ def main():
   context = Context()
 
   if args.chatty:
-    print ('')
+    print('')
 
   if args.verbose:
     context.get_logger().addHandler(log_handler())
@@ -304,7 +304,7 @@ def main():
     args.command(args, store)
 
   if args.chatty:
-    print ('')
+    print('')
 
 if __name__ == '__main__':
   main()
