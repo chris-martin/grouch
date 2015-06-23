@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 from textwrap import TextWrapper
+
 from context import Context
 from model import Course, Term
 from scraper import Scraper
