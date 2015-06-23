@@ -1,4 +1,4 @@
-from BeautifulSoup import BeautifulSoup, BeautifulStoneSoup
+from bs4 import BeautifulSoup, BeautifulStoneSoup
 from datetime import datetime, timedelta
 from html2text import unescape
 from operator import itemgetter
@@ -6,8 +6,8 @@ import os.path
 import re
 import string
 import time
-from urllib import urlencode
-from urllib2 import Request, OpenerDirector, \
+from urllib.parse import urlencode
+from urllib.request import Request, OpenerDirector, \
   HTTPDefaultErrorHandler, HTTPSHandler
 
 from context import Context
